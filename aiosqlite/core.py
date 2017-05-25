@@ -35,7 +35,7 @@ class Connection:
         loop: asyncio.AbstractEventLoop,
         executor: ThreadPoolExecutor,
     ) -> None:
-        self._conn: sqlite3.Connection = None
+        self._conn = None  # type: sqlite3.Connection
         self._connector = connector
         self._loop = loop
         self._executor = executor

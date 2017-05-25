@@ -12,7 +12,8 @@ upload:
 
 lint:
 	python3 -m flake8 --show-source .
-	mypy --ignore-missing-imports .
+	mypy --ignore-missing-imports --python-version 3.5 .
+	mypy --ignore-missing-imports --python-version 3.6 .
 
 test:
 	python3 tests/smoke.py
