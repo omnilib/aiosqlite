@@ -15,6 +15,7 @@ lint:
 	mypy --ignore-missing-imports .
 
 test:
+	python3 tests/smoke.py
 	python3 -m unittest tests
 
 clean:
