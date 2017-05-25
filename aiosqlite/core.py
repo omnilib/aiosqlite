@@ -93,7 +93,7 @@ class Connection:
 
 def connect(
     database: str,
-    **kwargs: Any,
+    **kwargs,
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
 
