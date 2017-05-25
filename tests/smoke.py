@@ -4,12 +4,15 @@
 import aiosqlite
 import asyncio
 import logging
+import os
 import sys
 import traceback
 
+TEST_DB = 'test.db'
+
 
 async def test_connection():
-    async with aiosqlite.connect('test.db') as db:
+    async with aiosqlite.connect(TEST_DB) as db:
         assert isinstance(db, aiosqlite.Connection)
 
 
@@ -35,9 +38,15 @@ def setup_logger():
     return log
 
 
+def cleanup():
+    if os.path.exists(TEST_DB):
+        os.unlink(TEST_DB)
+
+
 def run_tests():
     """Find and execute smoke tests."""
     setup_logger()
+    cleanup()
 
     result = 0
     tests = [
@@ -65,6 +74,7 @@ def run_tests():
         print(tb)
 
     print('{}/{} smoke tests passed'.format(len(success), len(tests)))
+    cleanup()
     sys.exit(result)
 
 
