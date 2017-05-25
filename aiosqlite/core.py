@@ -99,11 +99,12 @@ def connect(
 
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(1)
-    connector = partial(
-        sqlite3.connect,
-        database,
-        check_same_thread=False,
-        **kwargs,
-    )
+
+    def connector() -> sqlite3.Connection:
+        return sqlite3.connect(
+            database,
+            check_same_thread=False,
+            **kwargs,
+        )
 
     return Connection(connector, loop, executor)
