@@ -54,12 +54,12 @@ class Connection(Thread):
                 continue
 
             try:
-                Log.debug(f'executing {fn}')
+                Log.debug('executing %s', fn)
                 result = fn()
-                Log.debug(f'returning {result}')
+                Log.debug('returning %s', result)
                 self._rx.put(result)
             except Exception as e:
-                Log.debug(f'returning exception {e}')
+                Log.debug('returning exception %s', e)
                 self._rx.put(e)
 
     async def _execute(self, fn, *args, **kwargs):
