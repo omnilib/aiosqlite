@@ -42,8 +42,8 @@ class Connection(Thread):
         self._connector = connector
         self._loop = loop
         self._lock = asyncio.Lock(loop=loop)
-        self._tx = Queue()
-        self._rx = Queue()
+        self._tx = Queue()  # type: Queue
+        self._rx = Queue()  # type: Queue
 
     def run(self) -> None:
         """Execute function calls on a separate thread."""
