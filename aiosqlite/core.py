@@ -5,8 +5,9 @@ import asyncio
 import logging
 import sqlite3
 
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from queue import Queue, Empty
+from threading import Thread
 from typing import Any, Callable, Iterable
 
 __all__ = [
@@ -28,22 +29,61 @@ class Cursor:
         self._cursor = cursor
 
 
-class Connection:
+class Connection(Thread):
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
         loop: asyncio.AbstractEventLoop,
-        executor: ThreadPoolExecutor,
     ) -> None:
+        super().__init__()
+
+        self._running = True
         self._conn = None  # type: sqlite3.Connection
         self._connector = connector
         self._loop = loop
-        self._executor = executor
+        self._lock = asyncio.Lock(loop=loop)
+        self._tx = Queue()
+        self._rx = Queue()
+
+    def run(self) -> None:
+        """Execute function calls on a separate thread."""
+        while self._running:
+            try:
+                fn = self._tx.get(timeout=0.1)
+            except Empty:
+                continue
+
+            try:
+                Log.debug(f'executing {fn}')
+                result = fn()
+                Log.debug(f'returning {result}')
+                self._rx.put(result)
+            except Exception as e:
+                Log.debug(f'returning exception {e}')
+                self._rx.put(e)
 
     async def _execute(self, fn, *args, **kwargs):
-        """Execute a function with the given arguments on the shared thread."""
+        """Queue a function with the given arguments for execution."""
+        await self._lock.acquire()
+
         pt = partial(fn, *args, **kwargs)
-        return await self._loop.run_in_executor(self._executor, pt)
+        self._tx.put_nowait(pt)
+
+        while True:
+            try:
+                result = self._rx.get_nowait()
+                break
+
+            except Empty:
+                await asyncio.sleep(0.1)
+                continue
+
+        self._lock.release()
+
+        if isinstance(result, Exception):
+            raise result
+
+        return result
 
     async def _connect(self):
         """Connect to the actual sqlite database."""
@@ -51,6 +91,7 @@ class Connection:
             self._conn = await self._execute(self._connector)
 
     async def __aenter__(self) -> 'Connection':
+        self.start()
         await self._connect()
         return self
 
@@ -68,6 +109,7 @@ class Connection:
         raise NotImplementedError('Not yet available in aiosqlite')
 
     async def close(self) -> None:
+        self._running = False
         await self._execute(self._conn.close)
 
     async def execute(
@@ -98,13 +140,11 @@ def connect(
     """Create and return a connection proxy to the sqlite database."""
 
     loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(1)
 
     def connector() -> sqlite3.Connection:
         return sqlite3.connect(
             database,
-            check_same_thread=False,
             **kwargs,
         )
 
-    return Connection(connector, loop, executor)
+    return Connection(connector, loop)
