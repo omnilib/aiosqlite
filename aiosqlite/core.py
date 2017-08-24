@@ -8,7 +8,7 @@ import sqlite3
 from functools import partial
 from queue import Queue, Empty
 from threading import Thread
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional, Tuple
 
 __all__ = [
     'connect',
@@ -27,6 +27,91 @@ class Cursor:
     ) -> None:
         self._conn = conn
         self._cursor = cursor
+
+    def __aiter__(self) -> 'Cursor':
+        """The cursor proxy is also an async iterator."""
+        return self
+
+    async def __anext__(self) -> sqlite3.Row:
+        """Use `cursor.fetchone()` to provide an async iterable."""
+        row = await self.fetchone()
+        if row is None:
+            raise StopAsyncIteration
+        return row
+
+    async def _execute(self, fn, *args, **kwargs):
+        """Execute the given function on the shared connection's thread."""
+        return await self._conn._execute(fn, *args, **kwargs)
+
+    async def execute(
+        self,
+        sql: str,
+        parameters: Iterable[Any] = None,
+    ) -> None:
+        """Execute the given query."""
+        if parameters is None:
+            parameters = []
+
+        await self._execute(self._cursor.execute, sql, parameters)
+
+    async def executemany(
+        self,
+        sql: str,
+        parameters: Iterable[Iterable[Any]],
+    ) -> None:
+        """Execute the given multiquery."""
+        await self._execute(self._cursor.executemany, sql, parameters)
+
+    async def executescript(
+        self,
+        sql_script: str,
+    ) -> None:
+        """Execute a user script."""
+        await self._execute(self._cursor.executescript, sql_script)
+
+    async def fetchone(self) -> Optional[sqlite3.Row]:
+        """Fetch a single row."""
+        return await self._execute(self._cursor.fetchone)
+
+    async def fetchmany(self, size: int = None) -> Iterable[sqlite3.Row]:
+        """Fetch up to `cursor.arraysize` number of rows."""
+        if size is None:
+            return await self._execute(self._cursor.fetchmany)
+        else:
+            return await self._execute(self._cursor.fetchmany, size)
+
+    async def fetchall(self) -> Iterable[sqlite3.Row]:
+        """Fetch all remaining rows."""
+        return await self._execute(self._cursor.fetchall)
+
+    async def close(self) -> None:
+        """Close the cursor."""
+        await self._execute(self._cursor.close)
+        self._running = False
+
+    @property
+    def rowcount(self) -> int:
+        return self._cursor.rowcount
+
+    @property
+    def lastrowid(self) -> int:
+        return self._cursor.lastrowid
+
+    @property
+    def arraysize(self) -> int:
+        return self._cursor.arraysize
+
+    @arraysize.setter
+    def arraysize(self, value: int) -> None:
+        self._cursor.arraysize = value
+
+    @property
+    def description(self) -> Tuple[Tuple]:
+        return self._cursor.description
+
+    @property
+    def connection(self) -> sqlite3.Connection:
+        return self._cursor.connection
 
 
 class Connection(Thread):
@@ -59,7 +144,7 @@ class Connection(Thread):
                 Log.debug('returning %s', result)
                 self._rx.put(result)
             except Exception as e:
-                Log.debug('returning exception %s', e)
+                Log.exception('returning exception %s', e)
                 self._rx.put(e)
 
     async def _execute(self, fn, *args, **kwargs):
@@ -100,37 +185,66 @@ class Connection(Thread):
         self._conn = None
 
     async def cursor(self) -> Cursor:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Create an aiosqlite cursor wrapping a sqlite3 cursor object."""
+        return Cursor(self, await self._execute(self._conn.cursor))
 
     async def commit(self) -> None:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Commit the current transaction."""
+        await self._execute(self._conn.commit)
 
     async def rollback(self) -> None:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Roll back the current transaction."""
+        await self._execute(self._conn.rollback)
 
     async def close(self) -> None:
-        self._running = False
+        """Complete queued queries/cursors and close the connection."""
         await self._execute(self._conn.close)
+        self._running = False
 
     async def execute(
         self,
         sql: str,
         parameters: Iterable[Any] = None,
     ) -> Cursor:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Helper to create a cursor and execute the given query."""
+        if parameters is None:
+            parameters = []
+
+        cursor = await self._execute(self._conn.execute, sql, parameters)
+        return Cursor(self, cursor)
 
     async def executemany(
         self,
         sql: str,
-        parameters: Iterable[Iterable[Any]] = None,
+        parameters: Iterable[Iterable[Any]],
     ) -> Cursor:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Helper to create a cursor and execute the given multiquery."""
+        cursor = await self._execute(self._conn.executemany, sql, parameters)
+        return Cursor(self, cursor)
 
     async def executescript(
         self,
         sql_script: str,
     ) -> Cursor:
-        raise NotImplementedError('Not yet available in aiosqlite')
+        """Helper to create a cursor and execute a user script."""
+        cursor = await self._execute(self._conn.executescript, sql_script)
+        return Cursor(self, cursor)
+
+    async def interrupt(self) -> None:
+        """Interrupt pending queries."""
+        return self._conn.interrupt()
+
+    @property
+    def isolation_level(self) -> str:
+        return self._conn.isolation_level
+
+    @isolation_level.setter
+    def isolation_level(self, value: str) -> None:
+        self._conn.isolation_level = value
+
+    @property
+    def in_transaction(self) -> bool:
+        return self._conn.in_transaction
 
 
 def connect(

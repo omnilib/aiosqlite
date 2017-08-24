@@ -16,6 +16,75 @@ async def test_connection():
         assert isinstance(db, aiosqlite.Connection)
 
 
+async def test_multiple_connections():
+    async with aiosqlite.connect(TEST_DB) as db:
+        await db.execute(
+            'create table multiple_connections '
+            '(i integer primary key asc, k integer)'
+        )
+
+    async def do_one_conn(i):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute(
+                'insert into multiple_connections (k) values (?)', [i]
+            )
+            await db.commit()
+
+    await asyncio.gather(*[
+        do_one_conn(i) for i in range(10)
+    ])
+
+    async with aiosqlite.connect(TEST_DB) as db:
+        cursor = await db.execute('select * from multiple_connections')
+        rows = await cursor.fetchall()
+
+    assert len(rows) == 10
+
+
+async def test_multiple_queries():
+    async with aiosqlite.connect(TEST_DB) as db:
+        await db.execute(
+            'create table multiple_queries '
+            '(i integer primary key asc, k integer)'
+        )
+
+        await asyncio.gather(*[
+            db.execute(
+                'insert into multiple_queries (k) values (?)', [i]
+            ) for i in range(10)
+        ])
+
+        await db.commit()
+
+    async with aiosqlite.connect(TEST_DB) as db:
+        cursor = await db.execute('select * from multiple_queries')
+        rows = await cursor.fetchall()
+
+    assert len(rows) == 10
+
+
+async def test_iterable_cursor():
+    async with aiosqlite.connect(TEST_DB) as db:
+        cursor = await db.cursor()
+        await cursor.execute(
+            'create table iterable_cursor '
+            '(i integer primary key asc, k integer)'
+        )
+        await cursor.executemany(
+            'insert into iterable_cursor (k) values (?)',
+            [[i] for i in range(10)]
+        )
+        await db.commit()
+
+    async with aiosqlite.connect(TEST_DB) as db:
+        cursor = await db.execute('select * from iterable_cursor')
+        rows = []
+        async for row in cursor:
+            rows.append(row)
+
+    assert len(rows) == 10
+
+
 def setup_logger():
     log = logging.getLogger('')
     log.setLevel(logging.INFO)
