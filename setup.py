@@ -14,7 +14,7 @@ setup(
     author_email='john@noswap.com',
     url='https://github.com/jreese/aiosqlite',
     classifiers=[
-        'Development Status :: 3 - Beta',
+        'Development Status :: 4 - Beta',
         'Framework :: AsyncIO',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
