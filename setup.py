@@ -9,7 +9,7 @@ if path.isfile('README.rst'):
 setup(
     name='aiosqlite',
     description='asyncio bridge to the standard sqlite3 module',
-    version='0.1.0',
+    version='0.2.0',
     author='John Reese',
     author_email='john@noswap.com',
     url='https://github.com/jreese/aiosqlite',
@@ -20,7 +20,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries',
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 3 - Beta',
     ],
     license='MIT License',
     packages=['aiosqlite'],
