@@ -4,7 +4,7 @@ aiosqlite
 asyncio bridge to the standard sqlite3 module
 
 .. image:: https://travis-ci.org/jreese/aiosqlite.svg?branch=master
-    :target: https://travis-ci.org/jreese/aiosqliteedi
+    :target: https://travis-ci.org/jreese/aiosqlite
 
 
 License
