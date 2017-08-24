@@ -7,7 +7,7 @@ build:
 dev:
 	python3 setup.py develop
 
-upload:
+upload: lint test clean
 	python3 setup.py sdist upload
 
 lint:
