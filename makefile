@@ -11,7 +11,7 @@ upload: lint test clean
 	python3 setup.py sdist upload
 
 lint:
-	python3 -m flake8 --show-source .
+	pylint --rcfile .pylint aiosqlite
 	mypy --ignore-missing-imports --python-version 3.5 .
 	mypy --ignore-missing-imports --python-version 3.6 .
 
