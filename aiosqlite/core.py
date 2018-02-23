@@ -1,6 +1,10 @@
 # Copyright 2017 John Reese
 # Licensed under the MIT license
 
+"""
+Core implementation of aiosqlite proxies
+"""
+
 import asyncio
 import logging
 import sqlite3
@@ -16,7 +20,7 @@ __all__ = [
     'Cursor',
 ]
 
-Log = logging.getLogger('aiosqlite')
+LOG = logging.getLogger('aiosqlite')
 
 
 class Cursor:
@@ -75,10 +79,12 @@ class Cursor:
 
     async def fetchmany(self, size: int = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
-        if size is None:
-            return await self._execute(self._cursor.fetchmany)
-        else:
-            return await self._execute(self._cursor.fetchmany, size)
+        args = ()  # type: Tuple[int, ...]
+
+        if size is not None:
+            args = (size, )
+
+        return await self._execute(self._cursor.fetchmany, *args)
 
     async def fetchall(self) -> Iterable[sqlite3.Row]:
         """Fetch all remaining rows."""
@@ -87,7 +93,6 @@ class Cursor:
     async def close(self) -> None:
         """Close the cursor."""
         await self._execute(self._cursor.close)
-        self._running = False
 
     @property
     def rowcount(self) -> int:
@@ -139,12 +144,12 @@ class Connection(Thread):
                 continue
 
             try:
-                Log.debug('executing %s', fn)
+                LOG.debug('executing %s', fn)
                 result = fn()
-                Log.debug('returning %s', result)
+                LOG.debug('returning %s', result)
                 self._rx.put(result)
-            except Exception as e:
-                Log.exception('returning exception %s', e)
+            except BaseException as e:
+                LOG.exception('returning exception %s', e)
                 self._rx.put(e)
 
     async def _execute(self, fn, *args, **kwargs):
