@@ -143,7 +143,7 @@ class Connection(Thread):
                 break
 
             except Empty:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.005)
                 continue
 
         self._lock.release()
