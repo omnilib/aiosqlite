@@ -11,6 +11,7 @@ upload: lint test clean
 	python3 setup.py sdist upload
 
 lint:
+	black --check aiosqlite
 	pylint --rcfile .pylint aiosqlite
 	mypy --ignore-missing-imports --python-version 3.5 .
 	mypy --ignore-missing-imports --python-version 3.6 .

@@ -1,6 +1,5 @@
 # Copyright 2017 John Reese
 # Licensed under the MIT license
-
 """
 Core implementation of aiosqlite proxies
 """
@@ -14,21 +13,13 @@ from queue import Queue, Empty
 from threading import Thread
 from typing import Any, Callable, Iterable, Optional, Tuple
 
-__all__ = [
-    'connect',
-    'Connection',
-    'Cursor',
-]
-
+__all__ = ['connect', 'Connection', 'Cursor']
 LOG = logging.getLogger('aiosqlite')
 
 
 class Cursor:
-    def __init__(
-        self,
-        conn: 'Connection',
-        cursor: sqlite3.Cursor,
-    ) -> None:
+
+    def __init__(self, conn: 'Connection', cursor: sqlite3.Cursor) -> None:
         self._conn = conn
         self._cursor = cursor
 
@@ -41,35 +32,24 @@ class Cursor:
         row = await self.fetchone()
         if row is None:
             raise StopAsyncIteration
+
         return row
 
     async def _execute(self, fn, *args, **kwargs):
         """Execute the given function on the shared connection's thread."""
         return await self._conn._execute(fn, *args, **kwargs)
 
-    async def execute(
-        self,
-        sql: str,
-        parameters: Iterable[Any] = None,
-    ) -> None:
+    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> None:
         """Execute the given query."""
         if parameters is None:
             parameters = []
-
         await self._execute(self._cursor.execute, sql, parameters)
 
-    async def executemany(
-        self,
-        sql: str,
-        parameters: Iterable[Iterable[Any]],
-    ) -> None:
+    async def executemany(self, sql: str, parameters: Iterable[Iterable[Any]]) -> None:
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
 
-    async def executescript(
-        self,
-        sql_script: str,
-    ) -> None:
+    async def executescript(self, sql_script: str) -> None:
         """Execute a user script."""
         await self._execute(self._cursor.executescript, sql_script)
 
@@ -80,10 +60,8 @@ class Cursor:
     async def fetchmany(self, size: int = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
         args = ()  # type: Tuple[int, ...]
-
         if size is not None:
-            args = (size, )
-
+            args = (size,)
         return await self._execute(self._cursor.fetchmany, *args)
 
     async def fetchall(self) -> Iterable[sqlite3.Row]:
@@ -120,13 +98,13 @@ class Cursor:
 
 
 class Connection(Thread):
+
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
         loop: asyncio.AbstractEventLoop,
     ) -> None:
         super().__init__()
-
         self._running = True
         self._conn = None  # type: sqlite3.Connection
         self._connector = connector
@@ -155,10 +133,8 @@ class Connection(Thread):
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
         await self._lock.acquire()
-
         pt = partial(fn, *args, **kwargs)
         self._tx.put_nowait(pt)
-
         while True:
             try:
                 result = self._rx.get_nowait()
@@ -169,7 +145,6 @@ class Connection(Thread):
                 continue
 
         self._lock.release()
-
         if isinstance(result, Exception):
             raise result
 
@@ -206,31 +181,21 @@ class Connection(Thread):
         await self._execute(self._conn.close)
         self._running = False
 
-    async def execute(
-        self,
-        sql: str,
-        parameters: Iterable[Any] = None,
-    ) -> Cursor:
+    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
         """Helper to create a cursor and execute the given query."""
         if parameters is None:
             parameters = []
-
         cursor = await self._execute(self._conn.execute, sql, parameters)
         return Cursor(self, cursor)
 
     async def executemany(
-        self,
-        sql: str,
-        parameters: Iterable[Iterable[Any]],
+        self, sql: str, parameters: Iterable[Iterable[Any]]
     ) -> Cursor:
         """Helper to create a cursor and execute the given multiquery."""
         cursor = await self._execute(self._conn.executemany, sql, parameters)
         return Cursor(self, cursor)
 
-    async def executescript(
-        self,
-        sql_script: str,
-    ) -> Cursor:
+    async def executescript(self, sql_script: str) -> Cursor:
         """Helper to create a cursor and execute a user script."""
         cursor = await self._execute(self._conn.executescript, sql_script)
         return Cursor(self, cursor)
@@ -252,18 +217,11 @@ class Connection(Thread):
         return self._conn.in_transaction
 
 
-def connect(
-    database: str,
-    **kwargs: Any
-) -> Connection:
+def connect(database: str, **kwargs: Any) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
-
     loop = asyncio.get_event_loop()
 
     def connector() -> sqlite3.Connection:
-        return sqlite3.connect(
-            database,
-            **kwargs,
-        )
+        return sqlite3.connect(database, **kwargs)
 
     return Connection(connector, loop)
