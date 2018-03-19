@@ -5,8 +5,7 @@ python:
     - "3.6-dev"
     - "3.7-dev"
 install:
-    - "pip install mypy pylint"
-    - "pip install -r requirements.txt"
+    - "make setup"
 script:
     - "pip install ."
     - "make lint test"
