@@ -1,5 +1,6 @@
 # Copyright 2017 John Reese
 # Licensed under the MIT license
+
 """
 Core implementation of aiosqlite proxies
 """
@@ -14,6 +15,7 @@ from threading import Thread
 from typing import Any, Callable, Iterable, Optional, Tuple
 
 __all__ = ['connect', 'Connection', 'Cursor']
+
 LOG = logging.getLogger('aiosqlite')
 
 
