@@ -7,7 +7,7 @@ if path.isfile('README.rst'):
     shutil.copyfile('README.rst', 'README')
 
 setup(
-    name='aiosqlite',
+    name='aiosqlite-fork',
     description='asyncio bridge to the standard sqlite3 module',
     version='0.2.1',
     author='John Reese',
