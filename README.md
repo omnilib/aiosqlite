@@ -4,7 +4,7 @@ aiosqlite
 AsyncIO bridge to the standard `sqlite3` module for Python 3.5+
 
 [![build status](https://travis-ci.org/jreese/aiosqlite.svg?branch=master)](https://travis-ci.org/jreese/aiosqlite)
-[![version](https://img.shields.io/pypi/v/aiosqlite.svg)](https://pypi.python.org/pypi/aiosqlite)
+[![version](https://img.shields.io/pypi/v/aiosqlite.svg)](https://pypi.org/project/aiosqlite)
 [![license](https://img.shields.io/pypi/l/aiosqlite.svg)](https://github.com/jreese/aiosqlite/blob/master/LICENSE)
 [![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
