@@ -6,7 +6,7 @@ dev:
 
 release: lint test clean
 	python3 setup.py sdist
-	twine upload dist/*
+	python3 -m twine upload dist/*
 
 make setup:
 	pip3 install -U mypy pylint twine
