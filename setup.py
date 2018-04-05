@@ -1,15 +1,19 @@
 from setuptools import setup
 
-from os import path
-import shutil
+with open('README.md') as f:
+    readme = f.read()
 
-if path.isfile('README.rst'):
-    shutil.copyfile('README.rst', 'README')
+with open('aiosqlite/__init__.py') as f:
+    for line in f:
+        if line.startswith('__version__'):
+            version = line.split("'")[1]
 
 setup(
     name='aiosqlite',
     description='asyncio bridge to the standard sqlite3 module',
-    version='0.2.1',
+    long_description=readme,
+    long_description_content_type='text/markdown',
+    version=version,
     author='John Reese',
     author_email='john@noswap.com',
     url='https://github.com/jreese/aiosqlite',
@@ -24,8 +28,9 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries',
     ],
-    license='MIT License',
+    license='MIT',
     packages=['aiosqlite'],
+    setup_requires=['setuptools>=38.6.0'],
     install_requires=[
     ],
 )

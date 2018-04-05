@@ -4,16 +4,17 @@ build:
 dev:
 	python3 setup.py develop
 
-upload: lint test clean
-	python3 setup.py sdist upload
+release: lint test clean
+	python3 setup.py sdist
+	twine upload dist/*
 
 make setup:
-	pip3 install mypy pylint
+	pip3 install -U mypy pylint twine
 	python3 -V | grep "3.[67]" && pip3 install black || true
 
 lint:
 	python3 -V | grep "3.[67]" && which black && black --check aiosqlite || true
-	pylint --rcfile .pylint aiosqlite
+	pylint --rcfile .pylint aiosqlite setup.py
 	mypy --ignore-missing-imports --python-version 3.5 .
 	mypy --ignore-missing-imports --python-version 3.6 .
 
