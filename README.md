@@ -1,17 +1,19 @@
 aiosqlite
 =========
 
-AsyncIO bridge to the standard ``sqlite3`` module for Python 3.5+
+AsyncIO bridge to the standard `sqlite3` module for Python 3.5+
 
-.. image:: https://travis-ci.org/jreese/aiosqlite.svg?branch=master
-    :target: https://travis-ci.org/jreese/aiosqlite
+[![build status](https://travis-ci.org/jreese/aiosqlite.svg?branch=master)](https://travis-ci.org/jreese/aiosqlite)
+[![version](https://img.shields.io/pypi/v/aiosqlite.svg)](https://pypi.python.org/pypi/aiosqlite)
+[![license](https://img.shields.io/pypi/l/aiosqlite.svg)](https://github.com/jreese/aiosqlite/blob/master/LICENSE)
+[![code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
 Install
 -------
 
 aiosqlite is compatible with Python 3.5 and newer.
-You can install it from PyPI with the following command::
+You can install it from PyPI with the following command:
 
     $ pip install aiosqlite
 
@@ -19,9 +21,9 @@ You can install it from PyPI with the following command::
 Usage
 -----
 
-aiosqlite replicates the standard ``sqlite3`` module, but with async versions
+aiosqlite replicates the standard `sqlite3` module, but with async versions
 of all the standard connection and cursor methods, and context managers for
-automatically closing connections::
+automatically closing connections:
 
     async with aiosqlite.connect(...) as db:
         await db.execute('INSERT INTO some_table ...')
@@ -51,7 +53,7 @@ async iterators to query results.
 License
 -------
 
-aiosqlite is copyright John Reese, and licensed under the MIT license.
-I am providing code in this repository to you under an open source license.
-This is my personal repository; the license you receive to my code
-is from me and not from my employer. See the ``LICENSE`` file for details.
+aiosqlite is copyright [John Reese](https://jreese.sh), and licensed under the
+MIT license.  I am providing code in this repository to you under an open source
+license.  This is my personal repository; the license you receive to my code
+is from me and not from my employer. See the `LICENSE` file for details.

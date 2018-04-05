@@ -1,6 +1,3 @@
-README:
-	cp README.rst README
-
 build:
 	python3 setup.py build
 
