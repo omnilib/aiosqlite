@@ -87,7 +87,7 @@ async def test_iterable_cursor():
 
 async def test_context_cursor():
     async with aiosqlite.connect(TEST_DB) as db:
-        async with await db.cursor() as cursor:
+        async with db.cursor() as cursor:
             await cursor.execute(
                 'create table context_cursor '
                 '(i integer primary key asc, k integer)'

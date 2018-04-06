@@ -9,6 +9,7 @@ import asyncio
 import logging
 import sqlite3
 
+from collections.abc import Coroutine
 from functools import partial
 from queue import Queue, Empty
 from threading import Thread
@@ -17,6 +18,39 @@ from typing import Any, Callable, Iterable, Optional, Tuple
 __all__ = ['connect', 'Connection', 'Cursor']
 
 LOG = logging.getLogger('aiosqlite')
+
+
+class _ContextManager(Coroutine):
+    __slots__ = ('_coro', '_obj')
+
+    def __init__(self, coro):
+        self._coro = coro
+        self._obj = None
+
+    def send(self, value):
+        return self._coro.send(value)
+
+    def throw(self, typ, val=None, tb=None):
+        if val is None:
+            return self._coro.throw(typ)
+        elif tb is None:
+            return self._coro.throw(typ, val)
+        else:
+            return self._coro.throw(typ, val, tb)
+
+    def close(self):
+        return self._coro.close()
+
+    def __await__(self):
+        return self._coro.__await__()
+
+    async def __aenter__(self):
+        self._obj = await self._coro
+        return self._obj
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self._obj.close()
+        self._obj = None
 
 
 class Cursor:
@@ -172,9 +206,12 @@ class Connection(Thread):
         await self.close()
         self._conn = None
 
-    async def cursor(self) -> Cursor:
+    async def _cursor(self) -> Cursor:
         """Create an aiosqlite cursor wrapping a sqlite3 cursor object."""
         return Cursor(self, await self._execute(self._conn.cursor))
+
+    def cursor(self) -> _ContextManager:
+        return _ContextManager(self._cursor())
 
     async def commit(self) -> None:
         """Commit the current transaction."""
