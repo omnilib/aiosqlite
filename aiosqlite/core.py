@@ -33,10 +33,9 @@ class _ContextManager(Coroutine):
     def throw(self, typ, val=None, tb=None):
         if val is None:
             return self._coro.throw(typ)
-        elif tb is None:
+        if tb is None:
             return self._coro.throw(typ, val)
-        else:
-            return self._coro.throw(typ, val, tb)
+        return self._coro.throw(typ, val, tb)
 
     def close(self):
         return self._coro.close()
