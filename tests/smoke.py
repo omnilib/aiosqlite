@@ -85,6 +85,28 @@ async def test_iterable_cursor():
     assert len(rows) == 10
 
 
+async def test_context_cursor():
+    async with aiosqlite.connect(TEST_DB) as db:
+        async with await db.cursor() as cursor:
+            await cursor.execute(
+                'create table context_cursor '
+                '(i integer primary key asc, k integer)'
+            )
+            await cursor.executemany(
+                'insert into context_cursor (k) values (?)',
+                [[i] for i in range(10)]
+            )
+            await db.commit()
+
+    async with aiosqlite.connect(TEST_DB) as db:
+        async with await db.execute('select * from context_cursor') as cursor:
+            rows = []
+            async for row in cursor:
+                rows.append(row)
+
+    assert len(rows) == 10
+
+
 def setup_logger():
     log = logging.getLogger('')
     log.setLevel(logging.INFO)
