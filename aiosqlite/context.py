@@ -1,3 +1,7 @@
+# Copyright 2018
+# Licensed under the MIT license
+
+
 from collections.abc import Coroutine
 from functools import wraps
 
