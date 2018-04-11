@@ -16,18 +16,18 @@ from typing import Any, Callable, Iterable, Optional, Tuple
 
 from .context import contextmanager
 
-__all__ = ['connect', 'Connection', 'Cursor']
+__all__ = ["connect", "Connection", "Cursor"]
 
-LOG = logging.getLogger('aiosqlite')
+LOG = logging.getLogger("aiosqlite")
 
 
 class Cursor:
 
-    def __init__(self, conn: 'Connection', cursor: sqlite3.Cursor) -> None:
+    def __init__(self, conn: "Connection", cursor: sqlite3.Cursor) -> None:
         self._conn = conn
         self._cursor = cursor
 
-    def __aiter__(self) -> 'Cursor':
+    def __aiter__(self) -> "Cursor":
         """The cursor proxy is also an async iterator."""
         return self
 
@@ -132,12 +132,12 @@ class Connection(Thread):
                 continue
 
             try:
-                LOG.debug('executing %s', fn)
+                LOG.debug("executing %s", fn)
                 result = fn()
-                LOG.debug('returning %s', result)
+                LOG.debug("returning %s", result)
                 self._rx.put(result)
             except BaseException as e:
-                LOG.exception('returning exception %s', e)
+                LOG.exception("returning exception %s", e)
                 self._rx.put(e)
 
     async def _execute(self, fn, *args, **kwargs):
@@ -165,7 +165,7 @@ class Connection(Thread):
         if self._conn is None:
             self._conn = await self._execute(self._connector)
 
-    async def __aenter__(self) -> 'Connection':
+    async def __aenter__(self) -> "Connection":
         self.start()
         await self._connect()
         return self

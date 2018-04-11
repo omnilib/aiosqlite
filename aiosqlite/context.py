@@ -3,7 +3,7 @@ from functools import wraps
 
 
 class ContextManager(Coroutine):
-    __slots__ = ('_coro', '_obj')
+    __slots__ = ("_coro", "_obj")
 
     def __init__(self, coro):
         self._coro = coro
@@ -15,8 +15,10 @@ class ContextManager(Coroutine):
     def throw(self, typ, val=None, tb=None):
         if val is None:
             return self._coro.throw(typ)
+
         if tb is None:
             return self._coro.throw(typ, val)
+
         return self._coro.throw(typ, val, tb)
 
     def close(self):
@@ -35,7 +37,9 @@ class ContextManager(Coroutine):
 
 
 def contextmanager(method):
+
     @wraps(method)
     def wrapper(self, *args, **kwargs) -> ContextManager:
         return ContextManager(method(self, *args, **kwargs))
+
     return wrapper
