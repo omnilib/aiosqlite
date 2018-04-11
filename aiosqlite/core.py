@@ -14,6 +14,8 @@ from queue import Queue, Empty
 from threading import Thread
 from typing import Any, Callable, Iterable, Optional, Tuple
 
+from .context import contextmanager
+
 __all__ = ['connect', 'Connection', 'Cursor']
 
 LOG = logging.getLogger('aiosqlite')
@@ -98,6 +100,12 @@ class Cursor:
     def connection(self) -> sqlite3.Connection:
         return self._cursor.connection
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
 
 class Connection(Thread):
 
@@ -166,6 +174,7 @@ class Connection(Thread):
         await self.close()
         self._conn = None
 
+    @contextmanager
     async def cursor(self) -> Cursor:
         """Create an aiosqlite cursor wrapping a sqlite3 cursor object."""
         return Cursor(self, await self._execute(self._conn.cursor))
@@ -183,6 +192,7 @@ class Connection(Thread):
         await self._execute(self._conn.close)
         self._running = False
 
+    @contextmanager
     async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
         """Helper to create a cursor and execute the given query."""
         if parameters is None:
@@ -190,6 +200,7 @@ class Connection(Thread):
         cursor = await self._execute(self._conn.execute, sql, parameters)
         return Cursor(self, cursor)
 
+    @contextmanager
     async def executemany(
         self, sql: str, parameters: Iterable[Iterable[Any]]
     ) -> Cursor:
@@ -197,6 +208,7 @@ class Connection(Thread):
         cursor = await self._execute(self._conn.executemany, sql, parameters)
         return Cursor(self, cursor)
 
+    @contextmanager
     async def executescript(self, sql_script: str) -> Cursor:
         """Helper to create a cursor and execute a user script."""
         cursor = await self._execute(self._conn.executescript, sql_script)
