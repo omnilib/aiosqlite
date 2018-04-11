@@ -6,7 +6,7 @@ with open('README.md') as f:
 with open('aiosqlite/__init__.py') as f:
     for line in f:
         if line.startswith('__version__'):
-            version = line.split("'")[1]
+            version = line.split('"')[1]
 
 setup(
     name='aiosqlite',
