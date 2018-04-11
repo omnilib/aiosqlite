@@ -99,7 +99,7 @@ async def test_context_cursor():
             await db.commit()
 
     async with aiosqlite.connect(TEST_DB) as db:
-        async with await db.execute('select * from context_cursor') as cursor:
+        async with db.execute('select * from context_cursor') as cursor:
             rows = []
             async for row in cursor:
                 rows.append(row)

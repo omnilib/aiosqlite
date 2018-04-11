@@ -9,47 +9,16 @@ import asyncio
 import logging
 import sqlite3
 
-from collections.abc import Coroutine
 from functools import partial
 from queue import Queue, Empty
 from threading import Thread
 from typing import Any, Callable, Iterable, Optional, Tuple
 
+from .context import contextmanager
+
 __all__ = ['connect', 'Connection', 'Cursor']
 
 LOG = logging.getLogger('aiosqlite')
-
-
-class _ContextManager(Coroutine):
-    __slots__ = ('_coro', '_obj')
-
-    def __init__(self, coro):
-        self._coro = coro
-        self._obj = None
-
-    def send(self, value):
-        return self._coro.send(value)
-
-    def throw(self, typ, val=None, tb=None):
-        if val is None:
-            return self._coro.throw(typ)
-        if tb is None:
-            return self._coro.throw(typ, val)
-        return self._coro.throw(typ, val, tb)
-
-    def close(self):
-        return self._coro.close()
-
-    def __await__(self):
-        return self._coro.__await__()
-
-    async def __aenter__(self):
-        self._obj = await self._coro
-        return self._obj
-
-    async def __aexit__(self, exc_type, exc, tb):
-        await self._obj.close()
-        self._obj = None
 
 
 class Cursor:
@@ -205,12 +174,10 @@ class Connection(Thread):
         await self.close()
         self._conn = None
 
-    async def _cursor(self) -> Cursor:
+    @contextmanager
+    async def cursor(self) -> Cursor:
         """Create an aiosqlite cursor wrapping a sqlite3 cursor object."""
         return Cursor(self, await self._execute(self._conn.cursor))
-
-    def cursor(self) -> _ContextManager:
-        return _ContextManager(self._cursor())
 
     async def commit(self) -> None:
         """Commit the current transaction."""
@@ -225,6 +192,7 @@ class Connection(Thread):
         await self._execute(self._conn.close)
         self._running = False
 
+    @contextmanager
     async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
         """Helper to create a cursor and execute the given query."""
         if parameters is None:
@@ -232,6 +200,7 @@ class Connection(Thread):
         cursor = await self._execute(self._conn.execute, sql, parameters)
         return Cursor(self, cursor)
 
+    @contextmanager
     async def executemany(
         self, sql: str, parameters: Iterable[Iterable[Any]]
     ) -> Cursor:
@@ -239,6 +208,7 @@ class Connection(Thread):
         cursor = await self._execute(self._conn.executemany, sql, parameters)
         return Cursor(self, cursor)
 
+    @contextmanager
     async def executescript(self, sql_script: str) -> Cursor:
         """Helper to create a cursor and execute a user script."""
         cursor = await self._execute(self._conn.executescript, sql_script)

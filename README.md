@@ -29,7 +29,7 @@ automatically closing connections:
         await db.execute('INSERT INTO some_table ...')
         await db.commit()
 
-        async with await db.execute('SELECT * FROM some_table') as cursor:
+        async with db.execute('SELECT * FROM some_table') as cursor:
             async for row in cursor:
                 ...
 
