@@ -15,8 +15,8 @@ make setup:
 lint:
 	python3 -V | grep "3.[67]" && which black && black --check aiosqlite || true
 	pylint --rcfile .pylint aiosqlite setup.py
-	mypy --ignore-missing-imports --python-version 3.5 --skip-version-check .
-	mypy --ignore-missing-imports --python-version 3.6 --skip-version-check .
+	mypy --ignore-missing-imports --python-version 3.5 --no-site-packages .
+	mypy --ignore-missing-imports --python-version 3.6 --no-site-packages .
 
 test:
 	python3 tests/smoke.py
