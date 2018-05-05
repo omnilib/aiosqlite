@@ -116,12 +116,19 @@ class Connection(Thread):
     ) -> None:
         super().__init__()
         self._running = True
-        self._conn = None  # type: sqlite3.Connection
+        self._connection = None  # type: Optional[sqlite3.Connection]
         self._connector = connector
         self._loop = loop
         self._lock = asyncio.Lock(loop=loop)
         self._tx = Queue()  # type: Queue
         self._rx = Queue()  # type: Queue
+
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        if self._connection is None:
+            raise ValueError("no active connection")
+
+        return self._connection
 
     def run(self) -> None:
         """Execute function calls on a separate thread."""
@@ -162,8 +169,8 @@ class Connection(Thread):
 
     async def _connect(self):
         """Connect to the actual sqlite database."""
-        if self._conn is None:
-            self._conn = await self._execute(self._connector)
+        if self._connection is None:
+            self._connection = await self._execute(self._connector)
 
     async def __aenter__(self) -> "Connection":
         self.start()
@@ -172,7 +179,7 @@ class Connection(Thread):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.close()
-        self._conn = None
+        self._connection = None
 
     @contextmanager
     async def cursor(self) -> Cursor:
