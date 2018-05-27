@@ -238,9 +238,12 @@ class Connection(Thread):
         return self._conn.in_transaction
 
 
-def connect(database: str, **kwargs: Any) -> Connection:
+def connect(
+    database: str, *, loop: asyncio.AbstractEventLoop = None, **kwargs: Any
+) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
-    loop = asyncio.get_event_loop()
+    if loop is None:
+        loop = asyncio.get_event_loop()
 
     def connector() -> sqlite3.Connection:
         return sqlite3.connect(database, **kwargs)
