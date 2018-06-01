@@ -22,7 +22,6 @@ LOG = logging.getLogger("aiosqlite")
 
 
 class Cursor:
-
     def __init__(self, conn: "Connection", cursor: sqlite3.Cursor) -> None:
         self._conn = conn
         self._cursor = cursor
@@ -108,7 +107,6 @@ class Cursor:
 
 
 class Connection(Thread):
-
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],

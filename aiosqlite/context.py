@@ -41,7 +41,6 @@ class ContextManager(Coroutine):
 
 
 def contextmanager(method):
-
     @wraps(method)
     def wrapper(self, *args, **kwargs) -> ContextManager:
         return ContextManager(method(self, *args, **kwargs))
