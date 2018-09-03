@@ -1,4 +1,4 @@
-# Copyright 2017 John Reese
+# Copyright 2018 John Reese
 # Licensed under the MIT license
 
 """asyncio bridge to sqlite3"""
