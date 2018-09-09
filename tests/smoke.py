@@ -138,7 +138,7 @@ async def test_connection_properties():
         async with db.cursor() as cursor:
             await cursor.execute("select * from test_properties")
             row = await cursor.fetchone()
-            assert type(row) == aiosqlite.Row, f"row is type {type(row)}"
+            assert type(row) == aiosqlite.Row
             assert row[1] == 1
             assert row[2] == b"hi"
             assert row["k"] == 1
