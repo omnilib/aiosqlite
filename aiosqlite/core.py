@@ -12,7 +12,7 @@ import sqlite3
 from functools import partial
 from queue import Queue, Empty
 from threading import Thread
-from typing import Any, Callable, Iterable, Optional, Tuple
+from typing import Any, Callable, Iterable, Optional, Tuple, Type
 
 from .context import contextmanager
 
@@ -224,6 +224,10 @@ class Connection(Thread):
         return self._conn.interrupt()
 
     @property
+    def in_transaction(self) -> bool:
+        return self._conn.in_transaction
+
+    @property
     def isolation_level(self) -> str:
         return self._conn.isolation_level
 
@@ -232,8 +236,24 @@ class Connection(Thread):
         self._conn.isolation_level = value
 
     @property
-    def in_transaction(self) -> bool:
-        return self._conn.in_transaction
+    def row_factory(self) -> Optional[Type]:
+        return self._conn.row_factory
+
+    @row_factory.setter
+    def row_factory(self, factory: Optional[Type]) -> None:
+        self._conn.row_factory = factory
+
+    @property
+    def text_factory(self) -> Type:
+        return self._conn.text_factory
+
+    @text_factory.setter
+    def text_factory(self, factory: Type) -> None:
+        self._conn.text_factory = factory
+
+    @property
+    def total_changes(self) -> int:
+        return self._conn.total_changes
 
 
 def connect(

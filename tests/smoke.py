@@ -99,6 +99,52 @@ async def test_context_cursor():
     assert len(rows) == 10
 
 
+async def test_connection_properties():
+    async with aiosqlite.connect(TEST_DB) as db:
+        assert db.total_changes == 0
+
+        async with db.cursor() as cursor:
+            assert db.in_transaction == False
+            await cursor.execute(
+                "create table test_properties "
+                "(i integer primary key asc, k integer, d text)"
+            )
+            await cursor.execute("insert into test_properties (k, d) values (1, 'hi')")
+            assert db.in_transaction == True
+            await db.commit()
+            assert db.in_transaction == False
+
+        assert db.total_changes == 1
+
+        assert db.row_factory == None
+        assert db.text_factory == str
+
+        async with db.cursor() as cursor:
+            await cursor.execute("select * from test_properties")
+            row = await cursor.fetchone()
+            assert type(row) == tuple
+            assert row == (1, 1, "hi")
+            try:
+                row["k"]
+                assert False, "tuple row should only be indexable by integers"
+            except TypeError:
+                pass
+
+        db.row_factory = aiosqlite.Row
+        db.text_factory = bytes
+        assert db.row_factory == aiosqlite.Row
+        assert db.text_factory == bytes
+
+        async with db.cursor() as cursor:
+            await cursor.execute("select * from test_properties")
+            row = await cursor.fetchone()
+            assert type(row) == aiosqlite.Row, f"row is type {type(row)}"
+            assert row[1] == 1
+            assert row[2] == b"hi"
+            assert row["k"] == 1
+            assert row["d"] == b"hi"
+
+
 def setup_logger():
     log = logging.getLogger("")
     log.setLevel(logging.INFO)
