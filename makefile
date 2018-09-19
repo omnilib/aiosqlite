@@ -21,5 +21,8 @@ test:
 	python3 tests/smoke.py
 	python3 -m unittest tests
 
+perf:
+	python3 -m unittest -v tests.perf
+
 clean:
 	rm -rf build dist README MANIFEST aiosqlite.egg-info
