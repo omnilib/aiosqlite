@@ -84,9 +84,7 @@ class PerfTest(aiounittest.AsyncTestCase):
     @timed
     async def test_atomics(self):
         async with aiosqlite.connect(TEST_DB) as db:
-            await db.execute(
-                "create table perf (i integer primary key asc, k integer)"
-            )
+            await db.execute("create table perf (i integer primary key asc, k integer)")
             await db.execute("insert into perf (k) values (2), (3)")
             await db.commit()
 
@@ -98,9 +96,7 @@ class PerfTest(aiounittest.AsyncTestCase):
     @timed
     async def test_inserts(self):
         async with aiosqlite.connect(TEST_DB) as db:
-            await db.execute(
-                "create table perf (i integer primary key asc, k integer)"
-            )
+            await db.execute("create table perf (i integer primary key asc, k integer)")
             await db.commit()
 
             while True:
