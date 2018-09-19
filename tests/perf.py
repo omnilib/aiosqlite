@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from .smoke import setup_logger
 
-TEST_DB = Path("test.db")
+TEST_DB = Path(":memory:")
 TARGET = 2.0
 RESULTS = {}
 
