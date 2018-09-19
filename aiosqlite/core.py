@@ -10,9 +10,10 @@ import logging
 import sqlite3
 
 from functools import partial
+from pathlib import Path
 from queue import Queue, Empty
 from threading import Thread
-from typing import Any, Callable, Iterable, Optional, Tuple, Type
+from typing import Any, Callable, Iterable, Optional, Tuple, Type, Union
 
 from .context import contextmanager
 
@@ -262,13 +263,13 @@ class Connection(Thread):
 
 
 def connect(
-    database: str, *, loop: asyncio.AbstractEventLoop = None, **kwargs: Any
+    database: Union[str, Path], *, loop: asyncio.AbstractEventLoop = None, **kwargs: Any
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
     if loop is None:
         loop = asyncio.get_event_loop()
 
     def connector() -> sqlite3.Connection:
-        return sqlite3.connect(database, **kwargs)
+        return sqlite3.connect(str(database), **kwargs)
 
     return Connection(connector, loop)
