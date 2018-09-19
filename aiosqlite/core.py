@@ -150,14 +150,19 @@ class Connection(Thread):
         await self._lock.acquire()
         pt = partial(fn, *args, **kwargs)
         self._tx.put_nowait(pt)
-        while True:
-            try:
-                result = self._rx.get_nowait()
-                break
+        try:
+            # Many commands return nearly immediately (e.g. in a transaction)
+            result = self._rx.get(timeout=0.001)
+        except Empty:
+            # Now poll for longer queries
+            while True:
+                try:
+                    result = self._rx.get_nowait()
+                    break
 
-            except Empty:
-                await asyncio.sleep(0.001)
-                continue
+                except Empty:
+                    await asyncio.sleep(0.001)
+                    continue
 
         self._lock.release()
         if isinstance(result, Exception):
