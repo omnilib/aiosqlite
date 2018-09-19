@@ -6,16 +6,15 @@ Simple perf tests for aiosqlite and the asyncio run loop.
 """
 
 import aiosqlite
-import asyncio
-import logging
+import aiounittest
 import os
 import sys
 import time
-import aiounittest
+
 from pathlib import Path
 from .smoke import setup_logger
 
-TEST_DB = "test.db"
+TEST_DB = Path("test.db")
 TARGET = 2.0
 RESULTS = {}
 
@@ -79,7 +78,8 @@ class PerfTest(aiounittest.AsyncTestCase):
             print(f"{name}: {count} iterations in {duration:.1f}s ({rate:.1f}/s)")
 
     def setUp(self):
-        Path(TEST_DB).unlink()
+        if TEST_DB.exists():
+            TEST_DB.unlink()
 
     @timed
     async def test_atomics(self):

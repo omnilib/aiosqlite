@@ -18,8 +18,7 @@ lint:
 	mypy --ignore-missing-imports --no-site-packages .
 
 test:
-	python3 tests/smoke.py
-	python3 -m unittest tests
+	python3 -m unittest -v tests
 
 perf:
 	python3 -m unittest -v tests.perf
