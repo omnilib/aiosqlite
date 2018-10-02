@@ -71,11 +71,12 @@ class PerfTest(aiounittest.AsyncTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("\nResults:")
+        print(f"\n{'Perf Test':<25} Iterations  Duration  {'Rate':>11}")
         for name in sorted(RESULTS):
             count, duration = RESULTS[name]
             rate = count / duration
-            print(f"{name}: {count} iterations in {duration:.1f}s ({rate:.1f}/s)")
+            name = name.replace("test_", "")
+            print(f"{name:<25} {count:>10}  {duration:>7.1f}s  {rate:>9.1f}/s")
 
     def setUp(self):
         if TEST_DB.exists():
