@@ -129,6 +129,19 @@ class Connection(Thread):
 
         return self._connection
 
+    def _execute_insert(
+        self, sql: str, parameters: Iterable[Any]
+    ) -> Optional[sqlite3.Row]:
+        cursor = self._conn.execute(sql, parameters)
+        cursor.execute("SELECT last_insert_rowid()")
+        return cursor.fetchone()
+
+    def _execute_fetchall(
+        self, sql: str, parameters: Iterable[Any]
+    ) -> Iterable[sqlite3.Row]:
+        cursor = self._conn.execute(sql, parameters)
+        return cursor.fetchall()
+
     def run(self) -> None:
         """Execute function calls on a separate thread."""
         while self._running:
@@ -210,6 +223,24 @@ class Connection(Thread):
             parameters = []
         cursor = await self._execute(self._conn.execute, sql, parameters)
         return Cursor(self, cursor)
+
+    @contextmanager
+    async def execute_insert(
+        self, sql: str, parameters: Iterable[Any] = None
+    ) -> Optional[sqlite3.Row]:
+        """Helper to insert and get the last_insert_rowid."""
+        if parameters is None:
+            parameters = []
+        return await self._execute(self._execute_insert, sql, parameters)
+
+    @contextmanager
+    async def execute_fetchall(
+        self, sql: str, parameters: Iterable[Any] = None
+    ) -> Iterable[sqlite3.Row]:
+        """Helper to execute a query and return all the data."""
+        if parameters is None:
+            parameters = []
+        return await self._execute(self._execute_fetchall, sql, parameters)
 
     @contextmanager
     async def executemany(
