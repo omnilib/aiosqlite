@@ -103,3 +103,52 @@ class PerfTest(aiounittest.AsyncTestCase):
                 yield
                 await db.execute("insert into perf (k) values (1), (2), (3)")
                 await db.commit()
+
+    @timed
+    async def test_insert_ids(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table perf (i integer primary key asc, k integer)")
+            await db.commit()
+
+            while True:
+                yield
+                cursor = await db.execute("insert into perf (k) values (1)")
+                await cursor.execute("select last_insert_rowid()")
+                await cursor.fetchone()
+                await db.commit()
+
+    @timed
+    async def test_insert_macro_ids(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table perf (i integer primary key asc, k integer)")
+            await db.commit()
+
+            while True:
+                yield
+                await db.execute_insert("insert into perf (k) values (1)")
+                await db.commit()
+
+    @timed
+    async def test_select(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table perf (i integer primary key asc, k integer)")
+            for i in range(100):
+                await db.execute("insert into perf (k) values (%d)" % (i,))
+            await db.commit()
+
+            while True:
+                yield
+                cursor = await db.execute("select i, k from perf")
+                assert len(await cursor.fetchall()) == 100
+
+    @timed
+    async def test_select_macro(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table perf (i integer primary key asc, k integer)")
+            for i in range(100):
+                await db.execute("insert into perf (k) values (%d)" % (i,))
+            await db.commit()
+
+            while True:
+                yield
+                assert len(await db.execute_fetchall("select i, k from perf")) == 100
