@@ -118,9 +118,7 @@ class Connection(Thread):
         self._connection = None  # type: Optional[sqlite3.Connection]
         self._connector = connector
         self._loop = loop
-        self._lock = asyncio.Lock(loop=loop)
         self._tx = Queue()  # type: Queue
-        self._rx = Queue()  # type: Queue
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -146,43 +144,27 @@ class Connection(Thread):
         """Execute function calls on a separate thread."""
         while self._running:
             try:
-                fn = self._tx.get(timeout=0.1)
+                future, function = self._tx.get(timeout=0.1)
             except Empty:
                 continue
 
             try:
-                LOG.debug("executing %s", fn)
-                result = fn()
+                LOG.debug("executing %s", function)
+                result = function()
                 LOG.debug("returning %s", result)
-                self._rx.put(result)
+                self._loop.call_soon_threadsafe(future.set_result, result)
             except BaseException as e:
                 LOG.exception("returning exception %s", e)
-                self._rx.put(e)
+                self._loop.call_soon_threadsafe(future.set_exception(e))
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
-        await self._lock.acquire()
-        pt = partial(fn, *args, **kwargs)
-        self._tx.put_nowait(pt)
-        try:
-            # Many commands return nearly immediately (e.g. in a transaction)
-            result = self._rx.get(timeout=0.001)
-        except Empty:
-            # Now poll for longer queries
-            while True:
-                try:
-                    result = self._rx.get_nowait()
-                    break
+        function = partial(fn, *args, **kwargs)
+        future = self._loop.create_future()
 
-                except Empty:
-                    await asyncio.sleep(0.001)
-                    continue
+        self._tx.put_nowait((future, function))
 
-        self._lock.release()
-        if isinstance(result, Exception):
-            raise result
-
-        return result
+        return await future
 
     async def _connect(self):
         """Connect to the actual sqlite database."""
