@@ -155,7 +155,7 @@ class Connection(Thread):
                 self._loop.call_soon_threadsafe(future.set_result, result)
             except BaseException as e:
                 LOG.exception("returning exception %s", e)
-                self._loop.call_soon_threadsafe(future.set_exception(e))
+                self._loop.call_soon_threadsafe(future.set_exception, e)
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
