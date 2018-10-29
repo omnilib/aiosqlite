@@ -157,3 +157,18 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 assert row[2] == b"hi"
                 assert row["k"] == 1
                 assert row["d"] == b"hi"
+
+    async def test_fetch_all(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute(
+                "create table test_fetch_all (i integer primary key asc, k integer)"
+            )
+            await db.execute(
+                "insert into test_fetch_all (k) values (10), (24), (16), (32)"
+            )
+            await db.commit()
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            cursor = await db.execute("select k from test_fetch_all where k < 30")
+            rows = await cursor.fetchall()
+            self.assertEqual(rows, [(10,), (24,), (16,)])
