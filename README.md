@@ -52,7 +52,7 @@ number of rows inserted, modified, or deleted:
 ```python
     async with aiosqlite.connect(...) as db:
         db.row_factory = aiosqlite.Row
-        async with db.execute'SELECT * FROM some_table') as cursor:
+        async with db.execute('SELECT * FROM some_table') as cursor:
             value = row['column']
 
         await db.execute('INSERT INTO foo some_table')
