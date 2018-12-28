@@ -283,8 +283,10 @@ def connect(
         loop = asyncio.get_event_loop()
 
     def connector() -> sqlite3.Connection:
-        if isinstance(database, (str, bytes)):
+        if isinstance(database, str):
             loc = database
+        elif isinstance(database, bytes):
+            loc = database.decode("utf-8")
         else:
             loc = str(database)
 
