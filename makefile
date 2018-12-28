@@ -13,9 +13,9 @@ setup:
 	if python3 -V | grep "3.[67]"; then pip3 install black; fi
 
 lint:
-	if python3 -V | grep "3.[67]"; then which black && black --check . ; fi
-	pylint --rcfile .pylint aiosqlite setup.py
 	mypy --ignore-missing-imports --no-site-packages .
+	pylint --rcfile .pylint aiosqlite setup.py
+	if python3 -V | grep "3.[67]"; then which black && black --check . ; fi
 
 test:
 	python3 -m unittest -v tests
