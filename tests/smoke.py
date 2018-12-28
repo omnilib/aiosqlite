@@ -29,6 +29,26 @@ class SmokeTest(aiounittest.AsyncTestCase):
         async with aiosqlite.connect(TEST_DB) as db:
             assert isinstance(db, aiosqlite.Connection)
 
+    async def test_connection_locations(self):
+        class Fake:
+            def __str__(self):
+                return str(TEST_DB)
+
+        locs = ("test.db", b"test.db", Path("test.db"), Fake())
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table foo (i integer, k integer)")
+            await db.execute("insert into foo (i, k) values (1, 5)")
+            await db.commit()
+
+            cursor = await db.execute("select * from foo")
+            rows = await cursor.fetchall()
+
+        for loc in locs:
+            async with aiosqlite.connect(loc) as db:
+                cursor = await db.execute("select * from foo")
+                self.assertEqual(await cursor.fetchall(), rows)
+
     async def test_multiple_connections(self):
         async with aiosqlite.connect(TEST_DB) as db:
             await db.execute(

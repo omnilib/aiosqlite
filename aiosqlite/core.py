@@ -283,6 +283,11 @@ def connect(
         loop = asyncio.get_event_loop()
 
     def connector() -> sqlite3.Connection:
-        return sqlite3.connect(str(database), **kwargs)
+        if isinstance(database, (str, bytes)):
+            loc = database
+        else:
+            loc = str(database)
+
+        return sqlite3.connect(loc, **kwargs)
 
     return Connection(connector, loop)
