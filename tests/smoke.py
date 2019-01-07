@@ -1,5 +1,7 @@
 # Copyright 2018 John Reese
 # Licensed under the MIT license
+from sqlite3 import OperationalError
+from unittest import SkipTest
 
 import aiosqlite
 import aiounittest
@@ -192,3 +194,30 @@ class SmokeTest(aiounittest.AsyncTestCase):
             cursor = await db.execute("select k from test_fetch_all where k < 30")
             rows = await cursor.fetchall()
             self.assertEqual(rows, [(10,), (24,), (16,)])
+
+    async def test_load_extension(self):
+        """Assert that loading an extension without enabling raises 'not authorized'"""
+        async with aiosqlite.connect(TEST_DB) as db:
+            try:
+                await db.load_extension("test")
+            except OperationalError as e:
+                assert "not authorized" in e.args
+            except AttributeError:
+                raise SkipTest(
+                    "python was not compiled with sqlite3 "
+                    "extension support, so we can't test it"
+                )
+
+    async def test_enable_load_extension(self):
+        """Assert that after enabling extension loading, they can be loaded"""
+        async with aiosqlite.connect(TEST_DB) as db:
+            try:
+                await db.enable_load_extension(True)
+                await db.load_extension("test")
+            except OperationalError as e:
+                assert "not authorized" not in e.args
+            except AttributeError:
+                raise SkipTest(
+                    "python was not compiled with sqlite3 "
+                    "extension support, so we can't test it"
+                )
