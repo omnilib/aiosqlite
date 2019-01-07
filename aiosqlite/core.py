@@ -274,6 +274,12 @@ class Connection(Thread):
     def total_changes(self) -> int:
         return self._conn.total_changes
 
+    async def enable_load_extension(self, value: bool) -> None:
+        await self._execute(self._conn.enable_load_extension, value)  # type: ignore
+
+    async def load_extension(self, path: str):
+        await self._execute(self._conn.load_extension, path)  # type: ignore
+
 
 def connect(
     database: Union[str, Path], *, loop: asyncio.AbstractEventLoop = None, **kwargs: Any
