@@ -195,19 +195,6 @@ class SmokeTest(aiounittest.AsyncTestCase):
             rows = await cursor.fetchall()
             self.assertEqual(rows, [(10,), (24,), (16,)])
 
-    async def test_load_extension(self):
-        """Assert that loading an extension without enabling raises 'not authorized'"""
-        async with aiosqlite.connect(TEST_DB) as db:
-            try:
-                await db.load_extension("test")
-            except OperationalError as e:
-                assert "not authorized" in e.args
-            except AttributeError:
-                raise SkipTest(
-                    "python was not compiled with sqlite3 "
-                    "extension support, so we can't test it"
-                )
-
     async def test_enable_load_extension(self):
         """Assert that after enabling extension loading, they can be loaded"""
         async with aiosqlite.connect(TEST_DB) as db:
