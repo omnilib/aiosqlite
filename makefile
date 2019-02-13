@@ -19,7 +19,7 @@ lint:
 
 test:
 	python3 -m coverage run -m tests
-	python3 -m coverage report --skip-covered --show-missing --fail-under=85
+	python3 -m coverage report
 
 perf:
 	python3 -m unittest -v tests.perf
