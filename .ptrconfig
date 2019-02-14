@@ -1,0 +1,16 @@
+[ptr]
+atonce = 10
+exclude_patterns =
+  build*
+  yocto
+extra_build_env_prefix = /usr/local
+pypi_url = https://pypi.org/simple/
+venv_pkgs =
+  aiounittest
+  black
+  coverage
+  flake8
+  mypy
+  pip
+  pylint
+  setuptools
