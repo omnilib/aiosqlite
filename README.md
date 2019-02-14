@@ -35,7 +35,7 @@ automatically closing connections:
                 ...
 ```
 
-Alternately, you can continue using connections more directly:
+Alternately, you can continue using cursors more directly:
 
 ```python
     async with aiosqlite.connect(...) as db:
