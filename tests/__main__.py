@@ -2,7 +2,6 @@
 # Licensed under the MIT license
 
 import unittest
-from tests import *
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main(module="tests", verbosity=2)
