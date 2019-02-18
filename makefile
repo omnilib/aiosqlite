@@ -9,7 +9,7 @@ release: lint test clean
 	python3 -m twine upload dist/*
 
 setup:
-	pip3 install -U mypy pylint twine aiounittest coverage
+	pip3 install -U mypy pylint twine aiounittest coverage codecov
 	if python3 -V | grep "3.[67]"; then pip3 install black; fi
 
 lint:
