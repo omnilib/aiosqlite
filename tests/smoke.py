@@ -6,7 +6,6 @@ from unittest import SkipTest
 import aiosqlite
 import aiounittest
 import asyncio
-import sys
 
 from pathlib import Path
 from .helpers import setup_logger
@@ -32,7 +31,7 @@ class SmokeTest(aiounittest.AsyncTestCase):
             assert isinstance(db, aiosqlite.Connection)
 
     async def test_connection_locations(self):
-        class Fake:
+        class Fake:  # pylint: disable=too-few-public-methods
             def __str__(self):
                 return str(TEST_DB)
 
@@ -135,10 +134,10 @@ class SmokeTest(aiounittest.AsyncTestCase):
 
     async def test_connection_properties(self):
         async with aiosqlite.connect(TEST_DB) as db:
-            assert db.total_changes == 0
+            self.assertEqual(db.total_changes, 0)
 
             async with db.cursor() as cursor:
-                assert db.in_transaction == False
+                self.assertFalse(db.in_transaction)
                 await cursor.execute(
                     "create table test_properties "
                     "(i integer primary key asc, k integer, d text)"
@@ -146,39 +145,36 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 await cursor.execute(
                     "insert into test_properties (k, d) values (1, 'hi')"
                 )
-                assert db.in_transaction == True
+                self.assertTrue(db.in_transaction)
                 await db.commit()
-                assert db.in_transaction == False
+                self.assertFalse(db.in_transaction)
 
-            assert db.total_changes == 1
+            self.assertEqual(db.total_changes, 1)
 
-            assert db.row_factory == None
-            assert db.text_factory == str
+            self.assertIsNone(db.row_factory)
+            self.assertEqual(db.text_factory, str)
 
             async with db.cursor() as cursor:
                 await cursor.execute("select * from test_properties")
                 row = await cursor.fetchone()
-                assert type(row) == tuple
-                assert row == (1, 1, "hi")
-                try:
-                    row["k"]
-                    assert False, "tuple row should only be indexable by integers"
-                except TypeError:
-                    pass
+                self.assertIsInstance(row, tuple)
+                self.assertEqual(row, (1, 1, "hi"))
+                with self.assertRaises(TypeError):
+                    _ = row["k"]
 
             db.row_factory = aiosqlite.Row
             db.text_factory = bytes
-            assert db.row_factory == aiosqlite.Row
-            assert db.text_factory == bytes
+            self.assertEqual(db.row_factory, aiosqlite.Row)
+            self.assertEqual(db.text_factory, bytes)
 
             async with db.cursor() as cursor:
                 await cursor.execute("select * from test_properties")
                 row = await cursor.fetchone()
-                assert type(row) == aiosqlite.Row
-                assert row[1] == 1
-                assert row[2] == b"hi"
-                assert row["k"] == 1
-                assert row["d"] == b"hi"
+                self.assertIsInstance(row, aiosqlite.Row)
+                self.assertEqual(row[1], 1)
+                self.assertEqual(row[2], b"hi")
+                self.assertEqual(row["k"], 1)
+                self.assertEqual(row["d"], b"hi")
 
     async def test_fetch_all(self):
         async with aiosqlite.connect(TEST_DB) as db:

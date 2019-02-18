@@ -7,8 +7,6 @@ Simple perf tests for aiosqlite and the asyncio run loop.
 
 import aiosqlite
 import aiounittest
-import os
-import sys
 import time
 
 from pathlib import Path
@@ -56,7 +54,6 @@ def timed(fn):
                 return
 
         duration = time.time() - before
-        rps = count / duration
 
         RESULTS[name] = (count, duration)
 
@@ -92,7 +89,7 @@ class PerfTest(aiounittest.AsyncTestCase):
             while True:
                 yield
                 async with db.execute("select last_insert_rowid()") as cursor:
-                    row_id = await cursor.fetchone()
+                    _row_id = await cursor.fetchone()
 
     @timed
     async def test_inserts(self):
