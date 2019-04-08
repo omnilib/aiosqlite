@@ -2,25 +2,31 @@
 
 ## Preparation
 
-You'll need to have Python 3.5 available for testing
-(I recommend using [pyenv][] for this), and a clean
-development environment (virtualenv is good).
+You'll need to have Python 3.5 available for testing.
 
-You can do this with pyenv and virtualenv:
+You can do this with [pyenv][]:
 
-    $ pyenv install 3.5.5
-    $ pyenv shell 3.5.5
-    $ python3 -m venv .aiosqlite
-    $ source .py3/bin/activate
+    $ pyenv install 3.5.6
+    $ pyenv shell 3.5.6
     
     
 ## Setup
 
-Once in your development environment, install the
-appropriate linting tools and dependencies:
+Once cloned, create a clean virtual environment and
+install the appropriate tools and dependencies:
 
     $ cd <path/to/aiosqlite>
-    $ make setup
+    $ make dev
+    $ source .py3/bin/activate
+
+
+## Testing
+
+Once you've made changes, you should run unit tests,
+validate your type annotations, and ensure your code
+meets the appropriate style and linting rules:
+
+    $ make test lint
     
     
 ## Submitting
@@ -32,7 +38,7 @@ that you have done the following:
 * Added appropriate license headers to new files
 * Written or modified tests for new functionality
 * Used [black][] to format code appropriately
-* Validated code with `make lint test`
+* Validated code with `make test lint`
 
 [black]: https://github.com/ambv/black
 [pyenv]: https://github.com/pyenv/pyenv
