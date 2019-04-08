@@ -13,7 +13,7 @@ from functools import partial
 from pathlib import Path
 from queue import Queue, Empty
 from threading import Thread
-from typing import Any, Callable, Iterable, Optional, Tuple, Type, Union
+from typing import Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union
 
 from .context import contextmanager
 
@@ -166,19 +166,21 @@ class Connection(Thread):
 
         return await future
 
-    async def _connect(self):
+    async def _connect(self) -> "Connection":
         """Connect to the actual sqlite database."""
         if self._connection is None:
             self._connection = await self._execute(self._connector)
+        return self
+
+    def __await__(self) -> Generator[Any, None, "Connection"]:
+        self.start()
+        return self._connect().__await__()
 
     async def __aenter__(self) -> "Connection":
-        self.start()
-        await self._connect()
-        return self
+        return await self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.close()
-        self._connection = None
 
     @contextmanager
     async def cursor(self) -> Cursor:
@@ -197,6 +199,7 @@ class Connection(Thread):
         """Complete queued queries/cursors and close the connection."""
         await self._execute(self._conn.close)
         self._running = False
+        self._connection = None
 
     @contextmanager
     async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:

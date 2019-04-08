@@ -26,9 +26,23 @@ class SmokeTest(aiounittest.AsyncTestCase):
         if TEST_DB.exists():
             TEST_DB.unlink()
 
-    async def test_connection(self):
+    async def test_connection_await(self):
+        db = await aiosqlite.connect(TEST_DB)
+        self.assertIsInstance(db, aiosqlite.Connection)
+
+        async with db.execute("select 1, 2") as cursor:
+            rows = await cursor.fetchall()
+            self.assertEqual(rows, [(1, 2)])
+
+        await db.close()
+
+    async def test_connection_context(self):
         async with aiosqlite.connect(TEST_DB) as db:
-            assert isinstance(db, aiosqlite.Connection)
+            self.assertIsInstance(db, aiosqlite.Connection)
+
+            async with db.execute("select 1, 2") as cursor:
+                rows = await cursor.fetchall()
+                self.assertEqual(rows, [(1, 2)])
 
     async def test_connection_locations(self):
         class Fake:  # pylint: disable=too-few-public-methods

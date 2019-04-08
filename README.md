@@ -36,14 +36,14 @@ automatically closing connections:
                 ...
 ```
 
-Alternately, you can continue using cursors more directly:
+Alternately, you can continue using connections and cursors more procedurally:
 
 ```python
-    async with aiosqlite.connect(...) as db:
-        cursor = await db.execute('SELECT * FROM some_table')
-        row = await cursor.fetchone()
-        rows = await cursor.fetchall()
-        await cursor.close()
+    db = await aiosqlite.connect(...):
+    cursor = await db.execute('SELECT * FROM some_table')
+    row = await cursor.fetchone()
+    rows = await cursor.fetchall()
+    await cursor.close()
 ```
 
 aiosqlite also replicates most of the standard connection properties, as needed
