@@ -24,7 +24,7 @@ test:
 	python3 -m coverage report
 
 perf:
-	python3 -m unittest -v tests.perf
+	python3 -m unittest -v aiosqlite.tests.perf
 
 clean:
 	rm -rf build dist README MANIFEST aiosqlite.egg-info
