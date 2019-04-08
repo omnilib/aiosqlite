@@ -16,11 +16,11 @@ release: lint test clean
 
 lint:
 	mypy --ignore-missing-imports --no-site-packages aiosqlite
-	pylint --rcfile .pylint aiosqlite tests setup.py
+	pylint --rcfile .pylint aiosqlite setup.py
 	if python3 -V | grep "3.[67]"; then which black && black --check . ; fi
 
 test:
-	python3 -m coverage run -m tests
+	python3 -m coverage run -m aiosqlite.tests
 	python3 -m coverage report
 
 perf:

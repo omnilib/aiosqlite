@@ -30,10 +30,10 @@ setup(
         "Topic :: Software Development :: Libraries",
     ],
     license="MIT",
-    packages=["aiosqlite"],
+    packages=["aiosqlite", "aiosqlite.tests"],
     python_requires=">=3.5",
     setup_requires=["setuptools>=38.6.0"],
     tests_require=["aiounittest"],
     install_requires=[],
-    test_suite="tests",
+    test_suite="aiosqlite.tests",
 )
