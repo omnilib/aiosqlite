@@ -7,7 +7,6 @@ python:
     - "3.6"
     - "3.7"
     - "3.8-dev"
-    - "pypy3.5"
 install:
     - "make setup"
     - "pip install ."
@@ -19,6 +18,11 @@ matrix:
     allow_failures:
         - python: "3.8-dev"
     include:
+        - python: "pypy3.5"
+          install:
+              - "pip install aiounittest coverage"
+          after_success:
+              - "true"
         - python: "3.6"
           env: LINTING=true PERF=true
           script:
