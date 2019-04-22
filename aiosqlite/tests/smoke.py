@@ -12,6 +12,12 @@ from .helpers import setup_logger
 
 TEST_DB = Path("test.db")
 
+# pypy uses non-standard text factory for low-level sqlite implementation
+try:
+    from _sqlite3 import _unicode_text_factory as default_text_factory
+except ImportError:
+    default_text_factory = str
+
 
 class SmokeTest(aiounittest.AsyncTestCase):
     @classmethod
@@ -166,7 +172,7 @@ class SmokeTest(aiounittest.AsyncTestCase):
             self.assertEqual(db.total_changes, 1)
 
             self.assertIsNone(db.row_factory)
-            self.assertEqual(db.text_factory, str)
+            self.assertEqual(db.text_factory, default_text_factory)
 
             async with db.cursor() as cursor:
                 await cursor.execute("select * from test_properties")
