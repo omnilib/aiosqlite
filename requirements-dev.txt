@@ -3,4 +3,4 @@ codecov
 coverage
 mypy
 pylint
-twine
+twine==2.0.0
