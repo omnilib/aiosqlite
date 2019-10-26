@@ -1,6 +1,6 @@
 aiounittest==1.3.0
-codecov
-coverage
-mypy
-pylint
-twine
+codecov==2.0.15
+coverage==4.5.4
+mypy==0.740
+pylint==2.4.3
+twine<2
