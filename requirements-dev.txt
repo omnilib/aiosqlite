@@ -1,0 +1,6 @@
+aiounittest
+codecov
+coverage
+mypy
+pylint
+twine

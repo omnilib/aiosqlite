@@ -1,33 +1,38 @@
 venv:
-	python3 -m venv .venv
+	python -m venv .venv
+	source .venv/bin/activate && make setup dev
+	echo 'run `source .venv/bin/activate` to develop aiosqlite'
 
 setup:
-	pip3 install -U mypy pylint twine aiounittest coverage codecov
-	if python3 -V | grep "3.[67]"; then pip3 install black; fi
+	python -m pip install -Ur requirements-dev.txt
+	if python -V | grep -v "3.5"; then python -m pip install -U black; fi
 
-dev: venv
-	source .venv/bin/activate && make setup
-	source .venv/bin/activate && python3 setup.py develop
-	@echo 'Run `source .venv/bin/activate` to develop aiosqlite'
-
+dev:
+	python setup.py develop
+	
 release: lint test clean
-	python3 setup.py sdist
-	python3 -m twine upload dist/*
+	python setup.py sdist
+	python -m twine upload dist/*
+
+format:
+	python -m isort --apply --recursive aiosqlite setup.py
+	python -m black aiosqlite setup.py
 
 lint:
-	mypy --ignore-missing-imports --no-site-packages aiosqlite
-	pylint --rcfile .pylint aiosqlite setup.py
-	if python3 -V | grep "3.[67]"; then which black && black --check . ; fi
+	python -m pylint --rcfile .pylint aiosqlite/*.py setup.py
+	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite setup.py; fi
+	if python -V | grep -v "3.5"; then python -m black --check aiosqlite setup.py; fi
 
 test:
-	python3 -m coverage run -m aiosqlite.tests
-	python3 -m coverage report
+	python -m coverage run -m aiosqlite.tests
+	python -m coverage report
+	python -m mypy aiosqlite/*.py
 
 perf:
-	python3 -m unittest -v aiosqlite.tests.perf
+	python -m unittest -v aiosqlite.tests.perf
 
 clean:
-	rm -rf build dist README MANIFEST aiosqlite.egg-info
+	rm -rf build dist README MANIFEST *.egg-info
 
 distclean: clean
 	rm -rf .venv
