@@ -1,6 +1,6 @@
 aiounittest
 codecov
 coverage
-mypy
+mypy==0.740
 pylint
 twine
