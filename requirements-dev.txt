@@ -2,5 +2,5 @@ aiounittest
 codecov
 coverage
 mypy
-pylint
+pylint==2.4.3
 twine
