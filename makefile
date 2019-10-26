@@ -20,7 +20,7 @@ format:
 
 lint:
 	python -m pylint --rcfile .pylint aiosqlite/*.py setup.py
-	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite setup.py
+	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite setup.py; fi
 	if python -V | grep -v "3.5"; then python -m black --check aiosqlite setup.py; fi
 
 test:
