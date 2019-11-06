@@ -3,4 +3,4 @@ codecov==2.0.15
 coverage==4.5.4
 mypy==0.740
 pylint==2.4.3
-twine<2
+twine==1.15.0  # pyup: >=1.15,<2
