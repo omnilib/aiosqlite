@@ -283,7 +283,7 @@ class Connection(Thread):
     async def load_extension(self, path: str):
         await self._execute(self._conn.load_extension, path)  # type: ignore
 
-    async def set_progress_handler(self, handler: Callable, n: int) -> None:
+    async def set_progress_handler(self, handler: Callable[[], Optional[int]], n: int) -> None:
         await self._execute(self._conn.set_progress_handler, handler, n)
 
 

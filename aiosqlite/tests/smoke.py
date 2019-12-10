@@ -229,8 +229,7 @@ class SmokeTest(aiounittest.AsyncTestCase):
         """Assert that after setting a progress handler returning 1, DB operations are aborted"""
         async with aiosqlite.connect(TEST_DB) as db:
             await db.set_progress_handler(lambda: 1, 1)
-            with self.assertRaises(OperationalError) as context:
+            with self.assertRaises(OperationalError):
                 await db.execute(
                     "create table test_progress_handler (i integer primary key asc, k integer)"
                 )
-                self.assertTrue(isinstance(context.exception, OperationalError))
