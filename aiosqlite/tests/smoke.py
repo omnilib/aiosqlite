@@ -224,3 +224,12 @@ class SmokeTest(aiounittest.AsyncTestCase):
                     "python was not compiled with sqlite3 "
                     "extension support, so we can't test it"
                 )
+
+    async def test_set_progress_handler(self):
+        """Assert that after setting a progress handler returning 1, DB operations are aborted"""
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.set_progress_handler(lambda: 1, 1)
+            with self.assertRaises(OperationalError):
+                await db.execute(
+                    "create table test_progress_handler (i integer primary key asc, k integer)"
+                )
