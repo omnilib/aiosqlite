@@ -233,3 +233,24 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 await db.execute(
                     "create table test_progress_handler (i integer primary key asc, k integer)"
                 )
+
+    async def test_create_function(self):
+        """Assert that after creating a custom function, it can be used"""
+
+        def no_arg():
+            return "no arg"
+
+        def one_arg(num):
+            return num * 2
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.create_function("no_arg", 0, no_arg)
+            await db.create_function("one_arg", 1, one_arg)
+
+            async with db.execute("SELECT no_arg();") as res:
+                row = await res.fetchone()
+                self.assertEqual(row[0], "no arg")
+
+            async with db.execute("SELECT one_arg(10);") as res:
+                row = await res.fetchone()
+                self.assertEqual(row[0], 20)
