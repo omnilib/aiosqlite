@@ -1,17 +1,33 @@
 aiosqlite
 =========
 
+v0.12.0
+-------
+
+Feature Release
+
+- Add support for custom functions (#58)
+- Official support for Python 3.8
+
+```
+$ git shortlog -s v0.11.0...v0.12.0
+     3	John Reese
+     1	dmitrypolo
+     3	pyup.io bot
+```
+
+
 v0.11.0
 -------
 
-Feature release
+Feature release v0.11.0
 
 - Added support for `set_progress_handler` (#49)
 - Improved and updated documentation
 
 ```
 $ git shortlog -s v0.10.0...v0.11.0
-     9	John Reese
+    11	John Reese
      4	Stanislas
      2	Vladislav Yarmak
      1	pyup-bot
