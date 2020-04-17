@@ -48,14 +48,17 @@ class Cursor:
         if parameters is None:
             parameters = []
         await self._execute(self._cursor.execute, sql, parameters)
+        return self
 
     async def executemany(self, sql: str, parameters: Iterable[Iterable[Any]]) -> None:
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
+        return self
 
     async def executescript(self, sql_script: str) -> None:
         """Execute a user script."""
         await self._execute(self._cursor.executescript, sql_script)
+        return self
 
     async def fetchone(self) -> Optional[sqlite3.Row]:
         """Fetch a single row."""
@@ -294,6 +297,11 @@ class Connection(Thread):
         self, handler: Callable[[], Optional[int]], n: int
     ) -> None:
         await self._execute(self._conn.set_progress_handler, handler, n)
+
+    async def set_trace_callback(
+        self, handler: Callable
+    ) -> None:
+        await self._execute(self._conn.set_trace_callback, handler)
 
 
 def connect(
