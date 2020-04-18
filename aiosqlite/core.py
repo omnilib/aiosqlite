@@ -49,8 +49,9 @@ class Cursor:
         await self._execute(self._cursor.execute, sql, parameters)
         return self
 
-    async def executemany(self, sql: str,
-                          parameters: Iterable[Iterable[Any]]) -> "Cursor":
+    async def executemany(
+        self, sql: str, parameters: Iterable[Iterable[Any]]
+    ) -> "Cursor":
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
         return self
@@ -298,9 +299,7 @@ class Connection(Thread):
     ) -> None:
         await self._execute(self._conn.set_progress_handler, handler, n)
 
-    async def set_trace_callback(
-        self, handler: Callable
-    ) -> None:
+    async def set_trace_callback(self, handler: Callable) -> None:
         await self._execute(self._conn.set_trace_callback, handler)
 
 
