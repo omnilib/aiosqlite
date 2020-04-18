@@ -50,7 +50,8 @@ class Cursor:
         await self._execute(self._cursor.execute, sql, parameters)
         return self
 
-    async def executemany(self, sql: str, parameters: Iterable[Iterable[Any]]) -> "Cursor":
+    async def executemany(self, sql: str,
+                          parameters: Iterable[Iterable[Any]]) -> "Cursor":
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
         return self
