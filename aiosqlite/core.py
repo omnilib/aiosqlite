@@ -43,19 +43,19 @@ class Cursor:
         """Execute the given function on the shared connection's thread."""
         return await self._conn._execute(fn, *args, **kwargs)
 
-    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> None:
+    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> "Cursor":
         """Execute the given query."""
         if parameters is None:
             parameters = []
         await self._execute(self._cursor.execute, sql, parameters)
         return self
 
-    async def executemany(self, sql: str, parameters: Iterable[Iterable[Any]]) -> None:
+    async def executemany(self, sql: str, parameters: Iterable[Iterable[Any]]) -> "Cursor":
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
         return self
 
-    async def executescript(self, sql_script: str) -> None:
+    async def executescript(self, sql_script: str) -> "Cursor":
         """Execute a user script."""
         await self._execute(self._cursor.executescript, sql_script)
         return self
