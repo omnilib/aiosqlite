@@ -1,7 +1,7 @@
 # Copyright 2018 John Reese
 # Licensed under the MIT license
 
-"""asyncio bridge to sqlite3"""
+"""asyncio bridge to the standard sqlite3 module"""
 
 from sqlite3 import (  # pylint: disable=redefined-builtin
     DatabaseError,
