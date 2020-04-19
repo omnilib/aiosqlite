@@ -1,13 +1,14 @@
 # Copyright 2018 John Reese
 # Licensed under the MIT license
+import asyncio
+from pathlib import Path
 from sqlite3 import OperationalError
 from unittest import SkipTest
 
-import aiosqlite
 import aiounittest
-import asyncio
 
-from pathlib import Path
+import aiosqlite
+
 from .helpers import setup_logger
 
 TEST_DB = Path("test.db")

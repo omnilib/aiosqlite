@@ -5,11 +5,13 @@
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
 
-import aiosqlite
-import aiounittest
 import time
-
 from pathlib import Path
+
+import aiounittest
+
+import aiosqlite
+
 from .smoke import setup_logger
 
 TEST_DB = Path(":memory:")

@@ -8,10 +8,9 @@ Core implementation of aiosqlite proxies
 import asyncio
 import logging
 import sqlite3
-
 from functools import partial
 from pathlib import Path
-from queue import Queue, Empty
+from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union
 

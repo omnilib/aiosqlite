@@ -4,21 +4,21 @@
 """asyncio bridge to sqlite3"""
 
 from sqlite3 import (  # pylint: disable=redefined-builtin
+    DatabaseError,
+    Error,
+    IntegrityError,
+    NotSupportedError,
+    OperationalError,
+    ProgrammingError,
+    Row,
+    Warning,
     register_adapter,
     register_converter,
     sqlite_version,
     sqlite_version_info,
-    Row,
-    Warning,
-    Error,
-    DatabaseError,
-    IntegrityError,
-    ProgrammingError,
-    OperationalError,
-    NotSupportedError,
 )
 
-from .core import connect, Connection, Cursor
+from .core import Connection, Cursor, connect
 
 __version__ = "0.12.0"
 __all__ = [
