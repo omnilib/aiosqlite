@@ -22,3 +22,21 @@ classifiers = [
 exclude = [
     ".github/",
 ]
+
+[tool.coverage.run]
+branch = true
+include = ["aiosqlite/*"]
+omit = ["aiosqlite/tests/*"]
+
+[tool.coverage.report]
+fail_under = 75
+precision = 1
+show_missing = true
+skip_covered = true
+
+[tool.isort]
+line_length = 88
+multi_line_output = 3
+force_grid_wrap = false
+include_trailing_comma = true
+use_parentheses = true
