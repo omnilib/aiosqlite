@@ -8,5 +8,17 @@ author = "John Reese"
 author-email = "john@noswap.com"
 description-file = "README.md"
 home-page = "https://github.com/jreese/aiosqlite"
+requires = []
 requires-python = ">=3.5"
-classifiers = ["License :: OSI Approved :: MIT License"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries",
+]
+
+[tool.flit.sdist]
+exclude = [
+    ".github/",
+]
