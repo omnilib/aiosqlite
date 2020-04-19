@@ -8,20 +8,19 @@ setup:
 	if python -V | grep -v "3.5"; then python -m pip install -U black; fi
 
 dev:
-	python setup.py develop
-	
+	flit install --symlink
+
 release: lint test clean
-	python setup.py sdist
-	python -m twine upload dist/*
+	flit publish
 
 format:
-	python -m isort --apply --recursive aiosqlite setup.py
-	python -m black aiosqlite setup.py
+	python -m isort --apply --recursive aiosqlite
+	python -m black aiosqlite
 
 lint:
-	python -m pylint --rcfile .pylint aiosqlite/*.py setup.py
-	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite setup.py; fi
-	if python -V | grep -v "3.5"; then python -m black --check aiosqlite setup.py; fi
+	python -m pylint --rcfile .pylint aiosqlite/*.py
+	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite; fi
+	if python -V | grep -v "3.5"; then python -m black --check aiosqlite; fi
 
 test:
 	python -m coverage run -m aiosqlite.tests
