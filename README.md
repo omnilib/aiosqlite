@@ -4,6 +4,7 @@ aiosqlite
 AsyncIO bridge to the standard `sqlite3` module for Python 3.5+
 
 [![pypi release](https://img.shields.io/pypi/v/aiosqlite.svg)](https://pypi.org/project/aiosqlite)
+[![documentation status](https://readthedocs.org/projects/aiosqlite/badge/?version=latest)](https://aiosqlite.omnilib.dev/en/latest/?badge=latest)
 [![changelog](https://img.shields.io/badge/change-log-blue)](https://github.com/jreese/aiosqlite/blob/master/CHANGELOG.md)
 [![code coverage](https://img.shields.io/codecov/c/github/jreese/aiosqlite/master.svg)](https://codecov.io/gh/jreese/aiosqlite)
 [![build status](https://github.com/jreese/aiosqlite/workflows/Build/badge.svg)](https://github.com/jreese/aiosqlite/actions)
@@ -20,8 +21,8 @@ You can install it from PyPI with the following command:
     $ pip install aiosqlite
 
 
-Usage
------
+Overview
+--------
 
 aiosqlite replicates the standard `sqlite3` module, but with async versions
 of all the standard connection and cursor methods, and context managers for
@@ -37,45 +38,7 @@ automatically closing connections:
                 ...
 ```
 
-Alternately, you can continue using connections and cursors more procedurally:
-
-```python
-    db = await aiosqlite.connect(...)
-    cursor = await db.execute('SELECT * FROM some_table')
-    row = await cursor.fetchone()
-    rows = await cursor.fetchall()
-    await cursor.close()
-    await db.close()
-```
-
-aiosqlite also replicates most of the standard connection properties, as needed
-for advanced use cases like row or text factories, or for tracking the total
-number of rows inserted, modified, or deleted:
-
-```python
-    async with aiosqlite.connect(...) as db:
-        db.row_factory = aiosqlite.Row
-        async with db.execute('SELECT * FROM some_table') as cursor:
-            value = row['column']
-
-        await db.execute('INSERT INTO foo some_table')
-        assert db.total_changes > 0
-```
-
-
-Details
--------
-
-aiosqlite allows interaction with SQLite databases on the main AsyncIO event
-loop without blocking execution of other coroutines while waiting for queries
-or data fetches.  It does this by using a single, shared thread per connection.
-This thread executes all actions within a shared request queue to prevent
-overlapping actions.
-
-Connection objects are proxies to the real connections, contain the shared
-execution thread, and provide context managers to handle automatically closing
-connections.  Cursors are similarly proxies to the real cursors, and provide
-async iterators to query results.
+Full documentation is available [on Omnilib.dev](https://aiosqlite.omnilib.dev).
 
 
 License
