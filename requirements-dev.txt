@@ -4,4 +4,5 @@ coverage[toml]==5.1
 flit==2.3.0
 mypy==0.770
 pylint==2.4.4
+sphinx==3.0.3
 twine==1.15.0  # pyup: >=1.15,<2
