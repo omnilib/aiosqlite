@@ -58,12 +58,14 @@ html_theme_options = {
     "fixed_sidebar": True,
     "badge_branch": "master",
     "github_button": True,
-    "github_user": "jreese",
+    "github_user": "omnilib",
     "github_repo": "aiosqlite",
     "github_type": "star",
     "show_powered_by": False,
     "sidebar_collapse": False,
-    "extra_nav_links": {"Report Issues": "https://github.com/jreese/aiosqlite/issues",},
+    "extra_nav_links": {
+        "Report Issues": "https://github.com/omnilib/aiosqlite/issues",
+    },
 }
 
 html_sidebars = {
