@@ -30,8 +30,11 @@ test:
 perf:
 	python -m unittest -v aiosqlite.tests.perf
 
+html: docs/*.rst docs/conf.py
+	sphinx-build -b html docs html
+
 clean:
-	rm -rf build dist README MANIFEST *.egg-info
+	rm -rf build dist html README MANIFEST *.egg-info
 
 distclean: clean
 	rm -rf .venv
