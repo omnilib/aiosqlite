@@ -60,6 +60,7 @@ html_theme_options = {
     "github_button": True,
     "github_user": "jreese",
     "github_repo": "aiosqlite",
+    "github_type": "star",
     "show_powered_by": False,
     "sidebar_collapse": False,
     "extra_nav_links": {"Report Issues": "https://github.com/jreese/aiosqlite/issues",},
