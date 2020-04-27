@@ -10,37 +10,37 @@ Connection
 .. autofunction:: connect
 
 .. autoclass:: Connection
-   :members:
+    :members:
 
 Cursors
 -------
 
 .. autoclass:: aiosqlite.core.Cursor
-   :members:
+    :members:
 
 Errors
 ------
 
 .. autoexception:: Warning
-   :members:
+    :members:
 
 .. autoexception:: Error
-   :members:
+    :members:
 
 .. autoexception:: DatabaseError
-   :members:
+    :members:
 
 .. autoexception:: IntegrityError
-   :members:
+    :members:
 
 .. autoexception:: ProgrammingError
-   :members:
+    :members:
 
 .. autoexception:: OperationalError
-   :members:
+    :members:
 
 .. autoexception:: NotSupportedError
-   :members:
+    :members:
 
 Advanced
 --------
@@ -49,11 +49,3 @@ Advanced
 
 .. autofunction:: register_converter
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

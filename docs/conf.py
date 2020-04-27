@@ -30,9 +30,9 @@ author = "John Reese"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "m2r",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
-    "sphinx_rtd_theme",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -43,7 +43,9 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+highlight_language = "python3"
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+master_doc = "index"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -60,6 +62,7 @@ html_theme_options = {
     "github_repo": "aiosqlite",
     "show_powered_by": False,
     "sidebar_collapse": False,
+    "extra_nav_links": {"Report Issues": "https://github.com/jreese/aiosqlite/issues",},
 }
 
 html_sidebars = {

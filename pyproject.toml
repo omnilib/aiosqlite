@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 module = "aiosqlite"
 author = "John Reese"
 author-email = "john@noswap.com"
-description-file = "README.md"
+description-file = "README.rst"
 home-page = "https://github.com/jreese/aiosqlite"
 requires = []
 requires-python = ">=3.5"
