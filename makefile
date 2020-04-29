@@ -1,7 +1,9 @@
-venv:
+.venv:
 	python -m venv .venv
 	source .venv/bin/activate && make setup dev
 	echo 'run `source .venv/bin/activate` to develop aiosqlite'
+
+venv: .venv
 
 setup:
 	python -m pip install -Ur requirements-dev.txt
@@ -30,8 +32,8 @@ test:
 perf:
 	python -m unittest -v aiosqlite.tests.perf
 
-html: README.rst docs/*.rst docs/conf.py
-	sphinx-build -b html docs html
+html: .venv README.rst docs/*.rst docs/conf.py
+	source .venv/bin/activate && sphinx-build -b html docs html
 
 clean:
 	rm -rf build dist html README MANIFEST *.egg-info
