@@ -57,20 +57,25 @@ html_theme_options = {
     "description": "Sqlite for Python AsyncIO",
     "fixed_sidebar": True,
     "badge_branch": "master",
-    "github_button": True,
+    "github_button": False,
     "github_user": "omnilib",
     "github_repo": "aiosqlite",
-    "github_type": "star",
     "show_powered_by": False,
     "sidebar_collapse": False,
     "extra_nav_links": {
         "Report Issues": "https://github.com/omnilib/aiosqlite/issues",
-        "The Omnilib Project": "https://omnilib.dev",
     },
 }
 
 html_sidebars = {
-    "**": ["about.html", "navigation.html", "relations.html", "searchbox.html"],
+    "**": [
+        "about.html",
+        "badges.html",
+        "navigation.html",
+        "relations.html",
+        "searchbox.html",
+        "omnilib.html",
+    ],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
