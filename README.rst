@@ -8,16 +8,16 @@ aiosqlite\: Sqlite for AsyncIO
    :target: https://aiosqlite.omnilib.dev/en/latest/?badge=latest
    :alt: Documentation Status
 .. image:: https://img.shields.io/badge/change-log-blue
-   :target: https://github.com/jreese/aiosqlite/blob/master/CHANGELOG.md
+   :target: https://github.com/omnilib/aiosqlite/blob/master/CHANGELOG.md
    :alt: Changelog
-.. image:: https://img.shields.io/codecov/c/github/jreese/aiosqlite/master.svg
-   :target: https://codecov.io/gh/jreese/aiosqlite
+.. image:: https://img.shields.io/codecov/c/github/omnilib/aiosqlite/master.svg
+   :target: https://codecov.io/gh/omnilib/aiosqlite
    :alt: Code Coverage
-.. image:: https://github.com/jreese/aiosqlite/workflows/Build/badge.svg
-   :target: https://github.com/jreese/aiosqlite/actions
+.. image:: https://github.com/omnilib/aiosqlite/workflows/Build/badge.svg
+   :target: https://github.com/omnilib/aiosqlite/actions
    :alt: Build Status
 .. image:: https://img.shields.io/pypi/l/aiosqlite.svg
-   :target: https://github.com/jreese/aiosqlite/blob/master/LICENSE
+   :target: https://github.com/omnilib/aiosqlite/blob/master/LICENSE
    :alt: MIT Licensed
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/ambv/black
@@ -91,4 +91,4 @@ MIT license.  I am providing code in this repository to you under an open source
 license.  This is my personal repository; the license you receive to my code
 is from me and not from my employer. See the `LICENSE`_ file for details.
 
-.. _LICENSE: https://github.com/jreese/aiosqlite/blob/master/LICENSE
+.. _LICENSE: https://github.com/omnilib/aiosqlite/blob/master/LICENSE
