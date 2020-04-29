@@ -65,6 +65,7 @@ html_theme_options = {
     "sidebar_collapse": False,
     "extra_nav_links": {
         "Report Issues": "https://github.com/omnilib/aiosqlite/issues",
+        "The Omnilib Project": "https://omnilib.dev",
     },
 }
 
