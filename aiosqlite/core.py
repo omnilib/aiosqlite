@@ -335,7 +335,7 @@ class Connection(Thread):
                 ...
 
         """
-        dump_queue: Queue = Queue()
+        dump_queue = Queue()  # type: Queue
 
         def dumper():
             try:
