@@ -1,6 +1,25 @@
 aiosqlite
 =========
 
+v0.13.0
+-------
+
+Feature release
+
+- `cursor.execute*()` now returns the cursor to match sqlite3 API (#62)
+- `Connection.set_trace_callback()` now supported (#62)
+- `Connection.iterdump()` is now supported (#66)
+- Fixed possible hung thread if connection failed (#55)
+- Dropped support for Python 3.5
+
+```
+$ git shortlog -s v0.12.0...v0.13.0
+    32	John Reese
+     1	pyup.io bot
+     5	shipmints
+```
+
+
 v0.12.0
 -------
 
@@ -11,7 +30,7 @@ Feature Release
 
 ```
 $ git shortlog -s v0.11.0...v0.12.0
-     3	John Reese
+     4	John Reese
      1	dmitrypolo
      3	pyup.io bot
 ```
