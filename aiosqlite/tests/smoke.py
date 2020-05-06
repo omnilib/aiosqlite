@@ -153,6 +153,27 @@ class SmokeTest(aiounittest.AsyncTestCase):
 
         assert len(rows) == 10
 
+    async def test_cursor_return_self(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            cursor = await db.cursor()
+
+            result = await cursor.execute(
+                "create table test_cursor_return_self (i integer, k integer)"
+            )
+            self.assertEqual(result, cursor, "cursor execute returns itself")
+
+            result = await cursor.executemany(
+                "insert into test_cursor_return_self values (?, ?)", [(1, 1), (2, 2)]
+            )
+            self.assertEqual(result, cursor)
+
+            result = await cursor.executescript(
+                "insert into test_cursor_return_self values (3, 3);"
+                "insert into test_cursor_return_self values (4, 4);"
+                "insert into test_cursor_return_self values (5, 5);"
+            )
+            self.assertEqual(result, cursor)
+
     async def test_connection_properties(self):
         async with aiosqlite.connect(TEST_DB) as db:
             self.assertEqual(db.total_changes, 0)
