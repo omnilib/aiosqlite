@@ -298,3 +298,22 @@ class SmokeTest(aiounittest.AsyncTestCase):
         with self.assertRaisesRegex(OperationalError, "unable to open database"):
             db = await aiosqlite.connect(bad_db)
             self.assertIsNone(db)  # should never be reached
+
+    async def test_iterdump(self):
+        async with aiosqlite.connect(":memory:") as db:
+            await db.execute("create table foo (i integer, k charvar(250))")
+            await db.executemany(
+                "insert into foo values (?, ?)", [(1, "hello"), (2, "world")]
+            )
+
+            lines = [line async for line in db.iterdump()]
+            self.assertEqual(
+                lines,
+                [
+                    "BEGIN TRANSACTION;",
+                    "CREATE TABLE foo (i integer, k charvar(250));",
+                    "INSERT INTO \"foo\" VALUES(1,'hello');",
+                    "INSERT INTO \"foo\" VALUES(2,'world');",
+                    "COMMIT;",
+                ],
+            )

@@ -12,7 +12,17 @@ from functools import partial
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
-from typing import Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Generator,
+    Iterable,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 from .context import contextmanager
 
@@ -314,6 +324,48 @@ class Connection(Thread):
 
     async def set_trace_callback(self, handler: Callable) -> None:
         await self._execute(self._conn.set_trace_callback, handler)
+
+    async def iterdump(self) -> AsyncIterator[str]:
+        """
+        Return an async iterator to dump the database in SQL text format.
+
+        Example::
+
+            async for line in db.iterdump():
+                ...
+
+        """
+        dump_queue: Queue = Queue()
+
+        def dumper():
+            try:
+                for line in self._conn.iterdump():
+                    dump_queue.put_nowait(line)
+                dump_queue.put_nowait(None)
+
+            except Exception:
+                LOG.exception("exception while dumping db")
+                dump_queue.put_nowait(None)
+                raise
+
+        fut = self._execute(dumper)
+        task = asyncio.ensure_future(fut)
+
+        while True:
+            try:
+                line: Optional[str] = dump_queue.get_nowait()
+                if line is None:
+                    break
+                yield line
+
+            except Empty:
+                if task.done():
+                    LOG.warning("iterdump completed unexpectedly")
+                    break
+
+                await asyncio.sleep(0.01)
+
+        await task
 
 
 def connect(
