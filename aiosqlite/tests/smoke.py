@@ -288,3 +288,13 @@ class SmokeTest(aiounittest.AsyncTestCase):
 
             await db.execute("select 10")
             self.assertIn("select 10", statements)
+
+    async def test_connect_error(self):
+        bad_db = Path("/something/that/shouldnt/exist.db")
+        with self.assertRaisesRegex(OperationalError, "unable to open database"):
+            async with aiosqlite.connect(bad_db) as db:
+                self.assertIsNone(db)  # should never be reached
+
+        with self.assertRaisesRegex(OperationalError, "unable to open database"):
+            db = await aiosqlite.connect(bad_db)
+            self.assertIsNone(db)  # should never be reached

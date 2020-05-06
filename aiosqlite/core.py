@@ -177,7 +177,13 @@ class Connection(Thread):
     async def _connect(self) -> "Connection":
         """Connect to the actual sqlite database."""
         if self._connection is None:
-            self._connection = await self._execute(self._connector)
+            try:
+                self._connection = await self._execute(self._connector)
+            except Exception:
+                self._running = False
+                self._connection = None
+                raise
+
         return self
 
     def __await__(self) -> Generator[Any, None, "Connection"]:
@@ -205,7 +211,10 @@ class Connection(Thread):
 
     async def close(self) -> None:
         """Complete queued queries/cursors and close the connection."""
-        await self._execute(self._conn.close)
+        try:
+            await self._execute(self._conn.close)
+        except Exception:
+            LOG.exception("exception occurred while closing connection")
         self._running = False
         self._connection = None
 
