@@ -276,3 +276,15 @@ class SmokeTest(aiounittest.AsyncTestCase):
             async with db.execute("SELECT one_arg(10);") as res:
                 row = await res.fetchone()
                 self.assertEqual(row[0], 20)
+
+    async def test_set_trace_callback(self):
+        statements = []
+
+        def callback(statement: str):
+            statements.append(statement)
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.set_trace_callback(callback)
+
+            await db.execute("select 10")
+            self.assertIn("select 10", statements)
