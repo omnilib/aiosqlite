@@ -77,7 +77,7 @@ class Cursor:
 
     async def fetchmany(self, size: int = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
-        args = ()  # type: Tuple[int, ...]
+        args: Tuple[int, ...] = ()
         if size is not None:
             args = (size,)
         return await self._execute(self._cursor.fetchmany, *args)
@@ -129,10 +129,10 @@ class Connection(Thread):
     ) -> None:
         super().__init__()
         self._running = True
-        self._connection = None  # type: Optional[sqlite3.Connection]
+        self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
         self._loop = loop
-        self._tx = Queue()  # type: Queue
+        self._tx: Queue = Queue()
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -335,7 +335,7 @@ class Connection(Thread):
                 ...
 
         """
-        dump_queue = Queue()  # type: Queue
+        dump_queue: Queue = Queue()
 
         def dumper():
             try:

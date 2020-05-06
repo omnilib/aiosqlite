@@ -9,7 +9,7 @@ author-email = "john@noswap.com"
 description-file = "README.rst"
 home-page = "https://aiosqlite.omnilib.dev"
 requires = []
-requires-python = ">=3.5"
+requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: AsyncIO",

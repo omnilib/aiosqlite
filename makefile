@@ -7,7 +7,6 @@ venv: .venv
 
 setup:
 	python -m pip install -Ur requirements-dev.txt
-	if python -V | grep -v "3.5"; then python -m pip install -U black; fi
 
 dev:
 	flit install --symlink
@@ -21,8 +20,8 @@ format:
 
 lint:
 	python -m pylint --rcfile .pylint aiosqlite/*.py
-	if python -V | grep -v "3.5"; then python -m isort --diff --recursive aiosqlite; fi
-	if python -V | grep -v "3.5"; then python -m black --check aiosqlite; fi
+	python -m isort --diff --recursive aiosqlite
+	python -m black --check aiosqlite
 
 test:
 	python -m coverage run -m aiosqlite.tests
