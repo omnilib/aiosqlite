@@ -43,6 +43,13 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+autodoc_default_options = {
+    "show-inheritance": True,
+    "members": True,
+    "undoc-members": True,
+}
+autodoc_member_order = "groupwise"
+
 highlight_language = "python3"
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 master_doc = "index"

@@ -145,7 +145,11 @@ class Connection(Thread):
         return cursor.fetchall()
 
     def run(self) -> None:
-        """Execute function calls on a separate thread."""
+        """
+        Execute function calls on a separate thread.
+
+        :meta private:
+        """
         while self._running:
             try:
                 future, function = self._tx.get(timeout=0.1)

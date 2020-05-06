@@ -10,13 +10,13 @@ Connection
 .. autofunction:: connect
 
 .. autoclass:: Connection
-    :members:
+    :special-members: __aenter__, __aexit__, __await__
 
 Cursors
 -------
 
 .. autoclass:: aiosqlite.core.Cursor
-    :members:
+    :special-members: __aiter__, __anext__, __aenter__, __aexit__
 
 Errors
 ------
