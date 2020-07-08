@@ -4,16 +4,12 @@
 
 import collections.abc
 from functools import wraps
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    TypeVar
-)
+from typing import Any, Callable, Coroutine, TypeVar
 
 from typing_extensions import AsyncContextManager
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
+
 
 class ContextManager(collections.abc.Coroutine):
     __slots__ = ("_coro", "_obj")
