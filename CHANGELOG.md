@@ -1,6 +1,22 @@
 aiosqlite
 =========
 
+v0.14.0
+-------
+
+Feature release
+
+- `Connection.backup()` now supported (#71)
+- PEP 561 support added to mark the package as type annotated (#69)
+- Better/fixed type annotations for context managers (#70)
+
+```
+$ git shortlog -s v0.13.0...v0.14.0
+     5	John Reese
+     3	montag451
+```
+
+
 v0.13.0
 -------
 
