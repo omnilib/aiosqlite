@@ -8,6 +8,7 @@ Core implementation of aiosqlite proxies
 import asyncio
 import logging
 import sqlite3
+import sys
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue
@@ -366,6 +367,37 @@ class Connection(Thread):
                 await asyncio.sleep(0.01)
 
         await task
+
+    async def backup(
+        self,
+        target: Union["Connection", sqlite3.Connection],
+        *,
+        pages: int = 0,
+        progress: Optional[Callable[[int, int, int], None]] = None,
+        name: str = "main",
+        sleep: float = 0.250
+    ) -> None:
+        """
+        Make a backup of the current database to the target database.
+
+        Takes either a standard sqlite3 or aiosqlite Connection object as the target.
+        """
+        if sys.version_info < (3, 7):
+            raise RuntimeError("backup() method is only available on Python 3.7+")
+
+        print("here")
+        if isinstance(target, Connection):
+            target = target._conn
+        print("there")
+
+        await self._execute(
+            self._conn.backup,
+            target,
+            pages=pages,
+            progress=progress,
+            name=name,
+            sleep=sleep,
+        )
 
 
 def connect(

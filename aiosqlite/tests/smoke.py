@@ -1,9 +1,11 @@
 # Copyright 2018 John Reese
 # Licensed under the MIT license
 import asyncio
+import sqlite3
+import sys
 from pathlib import Path
 from sqlite3 import OperationalError
-from unittest import SkipTest
+from unittest import SkipTest, skipIf, skipUnless
 
 import aiounittest
 
@@ -317,3 +319,53 @@ class SmokeTest(aiounittest.AsyncTestCase):
                     "COMMIT;",
                 ],
             )
+
+    @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
+    async def test_backup_aiosqlite(self):
+        def progress(a, b, c):
+            print(a, b, c)
+
+        async with aiosqlite.connect(":memory:") as db1, aiosqlite.connect(
+            ":memory:"
+        ) as db2:
+            await db1.execute("create table foo (i integer, k charvar(250))")
+            await db1.executemany(
+                "insert into foo values (?, ?)", [(1, "hello"), (2, "world")]
+            )
+            await db1.commit()
+
+            with self.assertRaisesRegex(OperationalError, "no such table: foo"):
+                await db2.execute("select * from foo")
+
+            await db1.backup(db2, progress=progress)
+
+            async with db2.execute("select * from foo") as cursor:
+                rows = await cursor.fetchall()
+                self.assertEqual(rows, [(1, "hello"), (2, "world")])
+
+    @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
+    async def test_backup_sqlite(self):
+        async with aiosqlite.connect(":memory:") as db1:
+            with sqlite3.connect(":memory:") as db2:
+                await db1.execute("create table foo (i integer, k charvar(250))")
+                await db1.executemany(
+                    "insert into foo values (?, ?)", [(1, "hello"), (2, "world")]
+                )
+                await db1.commit()
+
+                with self.assertRaisesRegex(OperationalError, "no such table: foo"):
+                    db2.execute("select * from foo")
+
+                await db1.backup(db2)
+
+                cursor = db2.execute("select * from foo")
+                rows = cursor.fetchall()
+                self.assertEqual(rows, [(1, "hello"), (2, "world")])
+
+    @skipUnless(sys.version_info < (3, 7), "Test short circuit fail on Py 3.6")
+    async def test_backup_py36(self):
+        async with aiosqlite.connect(":memory:") as db1, aiosqlite.connect(
+            ":memory:"
+        ) as db2:
+            with self.assertRaisesRegex(RuntimeError, "backup().+3.7"):
+                await db1.backup(db2)
