@@ -385,10 +385,8 @@ class Connection(Thread):
         if sys.version_info < (3, 7):
             raise RuntimeError("backup() method is only available on Python 3.7+")
 
-        print("here")
         if isinstance(target, Connection):
             target = target._conn
-        print("there")
 
         await self._execute(
             self._conn.backup,
