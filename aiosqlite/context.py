@@ -2,11 +2,16 @@
 # Licensed under the MIT license
 
 
-from collections.abc import Coroutine
+import collections.abc
 from functools import wraps
+from typing import Any, Callable, Coroutine, TypeVar
+
+from typing_extensions import AsyncContextManager
+
+_T = TypeVar("_T")
 
 
-class ContextManager(Coroutine):
+class ContextManager(collections.abc.Coroutine):
     __slots__ = ("_coro", "_obj")
 
     def __init__(self, coro):
@@ -40,7 +45,9 @@ class ContextManager(Coroutine):
         self._obj = None
 
 
-def contextmanager(method):
+def contextmanager(
+    method: Callable[..., Coroutine[Any, Any, _T]]
+) -> Callable[..., AsyncContextManager[_T]]:
     @wraps(method)
     def wrapper(self, *args, **kwargs) -> ContextManager:
         return ContextManager(method(self, *args, **kwargs))
