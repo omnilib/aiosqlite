@@ -1,6 +1,20 @@
 aiosqlite
 =========
 
+v0.14.1
+-------
+
+Bugfix release
+
+- Remove debugging print() calls. Oops!  (#72)
+
+```
+$ git shortlog -s v0.14.0...v0.14.1
+     2	John Reese
+     1	Spyros Roum
+```
+
+
 v0.14.0
 -------
 
