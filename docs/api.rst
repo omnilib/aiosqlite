@@ -15,7 +15,7 @@ Connection
 Cursors
 -------
 
-.. autoclass:: aiosqlite.core.Cursor
+.. autoclass:: aiosqlite.cursor.Cursor
     :special-members: __aiter__, __anext__, __aenter__, __aexit__
 
 Errors
