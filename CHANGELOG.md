@@ -1,6 +1,22 @@
 aiosqlite
 =========
 
+v0.15.0
+-------
+
+Feature release
+
+- Support for accessing connections from multiple event loops
+- Fixed type annotations for connection methods returning cursors
+- Move cursors into separate module from connections
+- Deprecated `loop` parameter to `connect()` and `Connection`
+
+```
+$ git shortlog -s v0.14.1...v0.15.0
+     7	John Reese
+```
+
+
 v0.14.1
 -------
 
