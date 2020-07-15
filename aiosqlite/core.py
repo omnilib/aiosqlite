@@ -23,6 +23,7 @@ from typing import (
     Type,
     Union,
 )
+from warnings import warn
 
 from .context import contextmanager
 from .cursor import Cursor
@@ -32,18 +33,30 @@ __all__ = ["connect", "Connection", "Cursor"]
 LOG = logging.getLogger("aiosqlite")
 
 
+def get_loop(future: asyncio.Future) -> asyncio.AbstractEventLoop:
+    if sys.version_info >= (3, 7):
+        return future.get_loop()
+    else:
+        return future._loop
+
+
 class Connection(Thread):
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
-        loop: asyncio.AbstractEventLoop,
+        loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         super().__init__()
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
-        self._loop = loop
         self._tx: Queue = Queue()
+
+        if loop is not None:
+            warn(
+                "aiosqlite.Connection no longer uses the `loop` parameter",
+                DeprecationWarning,
+            )
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -81,15 +94,15 @@ class Connection(Thread):
                 LOG.debug("executing %s", function)
                 result = function()
                 LOG.debug("returning %s", result)
-                self._loop.call_soon_threadsafe(future.set_result, result)
+                get_loop(future).call_soon_threadsafe(future.set_result, result)
             except BaseException as e:
                 LOG.exception("returning exception %s", e)
-                self._loop.call_soon_threadsafe(future.set_exception, e)
+                get_loop(future).call_soon_threadsafe(future.set_exception, e)
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
         function = partial(fn, *args, **kwargs)
-        future = self._loop.create_future()
+        future = asyncio.get_event_loop().create_future()
 
         self._tx.put_nowait((future, function))
 
@@ -309,11 +322,18 @@ class Connection(Thread):
 
 
 def connect(
-    database: Union[str, Path], *, loop: asyncio.AbstractEventLoop = None, **kwargs: Any
+    database: Union[str, Path],
+    *,
+    loop: Optional[asyncio.AbstractEventLoop] = None,
+    **kwargs: Any
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
-    if loop is None:
-        loop = asyncio.get_event_loop()
+
+    if loop is not None:
+        warn(
+            "aiosqlite.connect() no longer uses the `loop` parameter",
+            DeprecationWarning,
+        )
 
     def connector() -> sqlite3.Connection:
         if isinstance(database, str):
@@ -325,4 +345,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector, loop)
+    return Connection(connector)
