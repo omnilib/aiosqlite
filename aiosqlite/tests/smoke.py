@@ -5,6 +5,7 @@ import sqlite3
 import sys
 from pathlib import Path
 from sqlite3 import OperationalError
+from threading import Thread
 from unittest import SkipTest, skipIf, skipUnless
 
 import aiounittest
@@ -133,6 +134,39 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 rows.append(row)
 
         assert len(rows) == 10
+
+    async def test_multi_loop_usage(self):
+        results = {}
+
+        def runner(k, conn):
+            async def query():
+                async with conn.execute("select * from foo") as cursor:
+                    rows = await cursor.fetchall()
+                    self.assertEqual(len(rows), 2)
+                    return rows
+
+            with self.subTest(k):
+                loop = asyncio.new_event_loop()
+                rows = loop.run_until_complete(query())
+                loop.close()
+                results[k] = rows
+
+        async with aiosqlite.connect(":memory:") as db:
+            await db.execute("create table foo (id int, name varchar)")
+            await db.execute(
+                "insert into foo values (?, ?), (?, ?)", (1, "Sally", 2, "Janet")
+            )
+            await db.commit()
+
+            threads = [Thread(target=runner, args=(k, db)) for k in range(4)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+        self.assertEqual(len(results), 4)
+        for rows in results.values():
+            self.assertEqual(len(rows), 2)
 
     async def test_context_cursor(self):
         async with aiosqlite.connect(TEST_DB) as db:
