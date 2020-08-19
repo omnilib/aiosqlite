@@ -354,6 +354,16 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 ],
             )
 
+    async def test_cursor_on_closed_connection(self):
+        db = await aiosqlite.connect(TEST_DB)
+
+        cursor = await db.execute("select 1, 2")
+        await db.close()
+        with self.assertRaises(Exception):
+            await cursor.fetchall()
+        with self.assertRaises(Exception):
+            await cursor.fetchall()
+
     @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
     async def test_backup_aiosqlite(self):
         def progress(a, b, c):

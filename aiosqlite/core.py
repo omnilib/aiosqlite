@@ -105,6 +105,8 @@ class Connection(Thread):
         future = asyncio.get_event_loop().create_future()
 
         self._tx.put_nowait((future, function))
+        if not self._running or not self._connection:
+            raise ValueError("Connection closed")
 
         return await future
 
@@ -112,7 +114,9 @@ class Connection(Thread):
         """Connect to the actual sqlite database."""
         if self._connection is None:
             try:
-                self._connection = await self._execute(self._connector)
+                future = asyncio.get_event_loop().create_future()
+                self._tx.put_nowait((future, self._connector))
+                self._connection = await future
             except Exception:
                 self._running = False
                 self._connection = None
