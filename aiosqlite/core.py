@@ -84,12 +84,16 @@ class Connection(Thread):
 
         :meta private:
         """
-        while self._running:
+        while True:
+            # Continues running until all queue items are processed,
+            # even after connection is closed (so we can finalize all
+            # futures)
             try:
                 future, function = self._tx.get(timeout=0.1)
             except Empty:
-                continue
-
+                if self._running:
+                    continue
+                break
             try:
                 LOG.debug("executing %s", function)
                 result = function()
@@ -101,12 +105,13 @@ class Connection(Thread):
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
+        if not self._running or not self._connection:
+            raise ValueError("Connection closed")
+
         function = partial(fn, *args, **kwargs)
         future = asyncio.get_event_loop().create_future()
 
         self._tx.put_nowait((future, function))
-        if not self._running or not self._connection:
-            raise ValueError("Connection closed")
 
         return await future
 
