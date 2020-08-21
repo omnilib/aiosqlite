@@ -371,8 +371,8 @@ class SmokeTest(aiounittest.AsyncTestCase):
         tasks = []
         for i in range(100):
             if i == 50:
-                tasks.append(asyncio.create_task(db.close()))
-            tasks.append(asyncio.create_task(cursor.fetchall()))
+                tasks.append(asyncio.ensure_future(db.close()))
+            tasks.append(asyncio.ensure_future(cursor.fetchall()))
         for task in tasks:
             try:
                 await task
