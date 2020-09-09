@@ -9,10 +9,10 @@ import asyncio
 import logging
 import sqlite3
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue
-from threading import Thread
 from typing import (
     Any,
     AsyncIterator,
@@ -40,13 +40,13 @@ def get_loop(future: asyncio.Future) -> asyncio.AbstractEventLoop:
         return future._loop
 
 
-class Connection(Thread):
+class Connection:
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
-        super().__init__()
+        self._executor = ThreadPoolExecutor(max_workers=1)
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
@@ -78,35 +78,11 @@ class Connection(Thread):
         cursor = self._conn.execute(sql, parameters)
         return cursor.fetchall()
 
-    def run(self) -> None:
-        """
-        Execute function calls on a separate thread.
-
-        :meta private:
-        """
-        while self._running:
-            try:
-                future, function = self._tx.get(timeout=0.1)
-            except Empty:
-                continue
-
-            try:
-                LOG.debug("executing %s", function)
-                result = function()
-                LOG.debug("returning %s", result)
-                get_loop(future).call_soon_threadsafe(future.set_result, result)
-            except BaseException as e:
-                LOG.exception("returning exception %s", e)
-                get_loop(future).call_soon_threadsafe(future.set_exception, e)
-
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
         function = partial(fn, *args, **kwargs)
-        future = asyncio.get_event_loop().create_future()
 
-        self._tx.put_nowait((future, function))
-
-        return await future
+        return await asyncio.get_event_loop().run_in_executor(self._executor, function)
 
     async def _connect(self) -> "Connection":
         """Connect to the actual sqlite database."""
@@ -121,7 +97,6 @@ class Connection(Thread):
         return self
 
     def __await__(self) -> Generator[Any, None, "Connection"]:
-        self.start()
         return self._connect().__await__()
 
     async def __aenter__(self) -> "Connection":
