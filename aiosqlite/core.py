@@ -96,7 +96,7 @@ class Connection(Thread):
                 LOG.debug("returning %s", result)
                 get_loop(future).call_soon_threadsafe(future.set_result, result)
             except BaseException as e:
-                LOG.exception("returning exception %s", e)
+                LOG.info("returning exception %s", e)
                 get_loop(future).call_soon_threadsafe(future.set_exception, e)
 
     async def _execute(self, fn, *args, **kwargs):
