@@ -211,17 +211,18 @@ class Connection(Thread):
         higher, ``NotSupportedError`` will be raised if used with older
         versions.
         """
-        kwargs = {}
         if sys.version_info >= (3, 8):
-            kwargs["deterministic"] = deterministic
-
-        await self._execute(
-            self._conn.create_function,
-            name,
-            num_params,
-            func,
-            **kwargs
-        )
+            await self._execute(
+                self._conn.create_function,
+                name,
+                num_params,
+                func,
+                deterministic=deterministic,
+            )
+        else:
+            await self._execute(
+                self._conn.create_function, name, num_params, func,
+            )
 
     @property
     def in_transaction(self) -> bool:
