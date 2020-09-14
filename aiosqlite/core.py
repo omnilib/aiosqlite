@@ -196,12 +196,33 @@ class Connection(Thread):
         """Interrupt pending queries."""
         return self._conn.interrupt()
 
-    async def create_function(self, name: str, num_params: int, func: Callable) -> None:
-        """Create user-defined function that can be later used
+    async def create_function(
+        self, name: str, num_params: int, func: Callable, deterministic: bool = False,
+    ) -> None:
+        """
+        Create user-defined function that can be later used
         within SQL statements. Must be run within the same thread
         that query executions take place so instead of executing directly
-        against the connection, we defer this to `run` function."""
-        await self._execute(self._conn.create_function, name, num_params, func)
+        against the connection, we defer this to `run` function.
+
+        In Python 3.8 and above, if *deterministic* is true, the created
+        function is marked as deterministic, which allows SQLite to perform
+        additional optimizations. This flag is supported by SQLite 3.8.3 or
+        higher, ``NotSupportedError`` will be raised if used with older
+        versions.
+        """
+        if sys.version_info >= (3, 8):
+            await self._execute(
+                self._conn.create_function,
+                name,
+                num_params,
+                func,
+                deterministic=deterministic,
+            )
+        else:
+            await self._execute(
+                self._conn.create_function, name, num_params, func,
+            )
 
     @property
     def in_transaction(self) -> bool:
