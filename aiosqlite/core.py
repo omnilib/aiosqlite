@@ -8,6 +8,7 @@ Core implementation of aiosqlite proxies
 import asyncio
 import logging
 import sqlite3
+import warnings
 import sys
 from functools import partial
 from pathlib import Path
@@ -220,6 +221,13 @@ class Connection(Thread):
                 deterministic=deterministic,
             )
         else:
+            if deterministic:
+                warnings.warn(
+                    "Deterministic function support is only available on "
+                    'Python 3.8+. Function "{}" will be registered as '
+                    "non-deterministic as per SQLite defaults.".format(name)
+                )
+
             await self._execute(
                 self._conn.create_function, name, num_params, func,
             )

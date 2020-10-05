@@ -313,7 +313,29 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 row = await res.fetchone()
                 self.assertEqual(row[0], 20)
 
-    async def test_create_function_deterministic(self):
+    @skipUnless(sys.version_info < (3, 8), "Python < 3.8 specific behaviour")
+    async def test_create_function_deterministic_pre38(self):
+        """Make sure the deterministic parameter cannot be used in old Python versions"""
+
+        def one_arg(num):
+            return num * 2
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            with self.assertWarnsRegex(UserWarning, "registered as non-deterministic"):
+                await db.create_function("one_arg", 1, one_arg, deterministic=True)
+
+            await db.execute("create table foo (id int, bar int)")
+
+            # Deterministic parameter is only available in Python 3.8+ so this
+            # won't be deterministic
+            with self.assertRaisesRegex(
+                OperationalError,
+                "non-deterministic functions prohibited in index expressions",
+            ):
+                await db.execute("create index t on foo(one_arg(bar))")
+
+    @skipIf(sys.version_info < (3, 8), "Python 3.8+ specific behaviour")
+    async def test_create_function_deterministic_post38(self):
         """Assert that after creating a deterministic custom function, it can be used.
 
         https://sqlite.org/deterministic.html
@@ -326,16 +348,8 @@ class SmokeTest(aiounittest.AsyncTestCase):
             await db.create_function("one_arg", 1, one_arg, deterministic=True)
             await db.execute("create table foo (id int, bar int)")
 
-            # Non-deterministic functions cannot be used in indexes, but the
-            # deterministic parameter is only available in Python 3.8+.
-            if sys.version_info < (3, 8):
-                with self.assertRaisesRegex(
-                    OperationalError,
-                    "non-deterministic functions prohibited in index expressions",
-                ):
-                    await db.execute("create index t on foo(one_arg(bar))")
-            else:
-                await db.execute("create index t on foo(one_arg(bar))")
+            # Non-deterministic functions cannot be used in indexes
+            await db.execute("create index t on foo(one_arg(bar))")
 
     async def test_set_trace_callback(self):
         statements = []
