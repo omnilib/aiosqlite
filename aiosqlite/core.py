@@ -8,8 +8,8 @@ Core implementation of aiosqlite proxies
 import asyncio
 import logging
 import sqlite3
-import warnings
 import sys
+import warnings
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue

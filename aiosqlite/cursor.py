@@ -2,7 +2,7 @@
 # Licensed under the MIT license
 
 import sqlite3
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Iterable, Iterator, Optional, Tuple
 
 if TYPE_CHECKING:
     from .core import Connection
@@ -12,18 +12,30 @@ class Cursor:
     def __init__(self, conn: "Connection", cursor: sqlite3.Cursor) -> None:
         self._conn = conn
         self._cursor = cursor
+        self.__chunk: Optional[Iterator[sqlite3.Row]]
+        self.iter_chunk_size = 1024
 
     def __aiter__(self) -> "Cursor":
         """The cursor proxy is also an async iterator."""
+        self.__chunk = None
         return self
 
     async def __anext__(self) -> sqlite3.Row:
         """Use `cursor.fetchone()` to provide an async iterable."""
-        row = await self.fetchone()
-        if row is None:
-            raise StopAsyncIteration
+        if self.__chunk is None:
+            self.__chunk = await self.__fetch_anext_chunk()
 
-        return row
+        try:
+            return self.__chunk.__next__()
+        except StopIteration:
+            self.__chunk = await self.__fetch_anext_chunk()
+            return self.__chunk.__next__()
+
+    async def __fetch_anext_chunk(self) -> Iterator[sqlite3.Row]:
+        chunk = await self.fetchmany(self.iter_chunk_size)
+        if not chunk:
+            raise StopAsyncIteration
+        return iter(chunk)
 
     async def _execute(self, fn, *args, **kwargs):
         """Execute the given function on the shared connection's thread."""
