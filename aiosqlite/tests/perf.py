@@ -11,7 +11,6 @@ from pathlib import Path
 import aiounittest
 
 import aiosqlite
-
 from .smoke import setup_logger
 
 TEST_DB = Path(":memory:")

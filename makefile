@@ -15,12 +15,12 @@ release: lint test clean
 	flit publish
 
 format:
-	python -m isort --apply --recursive aiosqlite
+	python -m usort format aiosqlite
 	python -m black aiosqlite
 
 lint:
 	python -m pylint --rcfile .pylint aiosqlite/*.py
-	python -m isort --diff --recursive aiosqlite
+	python -m usort check aiosqlite
 	python -m black --check aiosqlite
 
 test:
@@ -32,7 +32,7 @@ perf:
 	python -m unittest -v aiosqlite.tests.perf
 
 html: .venv README.rst docs/*.rst docs/conf.py
-	source .venv/bin/activate && sphinx-build -b html docs html
+	.venv/bin/sphinx-build -b html docs html
 
 clean:
 	rm -rf build dist html README MANIFEST *.egg-info

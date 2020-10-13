@@ -11,7 +11,6 @@ from unittest import SkipTest, skipIf, skipUnless
 import aiounittest
 
 import aiosqlite
-
 from .helpers import setup_logger
 
 TEST_DB = Path("test.db")
