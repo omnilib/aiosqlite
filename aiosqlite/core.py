@@ -149,9 +149,11 @@ class Connection(Thread):
         try:
             await self._execute(self._conn.close)
         except Exception:
-            LOG.exception("exception occurred while closing connection")
-        self._running = False
-        self._connection = None
+            LOG.info("exception occurred while closing connection")
+            raise
+        finally:
+            self._running = False
+            self._connection = None
 
     @contextmanager
     async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
