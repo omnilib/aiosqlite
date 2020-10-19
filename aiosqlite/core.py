@@ -97,10 +97,20 @@ class Connection(Thread):
                 LOG.debug("executing %s", function)
                 result = function()
                 LOG.debug("returning %s", result)
-                get_loop(future).call_soon_threadsafe(future.set_result, result)
+
+                def set_result(result):
+                    if not future.done():
+                        future.set_result(result)
+
+                get_loop(future).call_soon_threadsafe(set_result, result)
             except BaseException as e:
                 LOG.info("returning exception %s", e)
-                get_loop(future).call_soon_threadsafe(future.set_exception, e)
+
+                def set_exception(e):
+                    if not future.done():
+                        future.set_exception(e)
+
+                get_loop(future).call_soon_threadsafe(set_exception, e)
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
