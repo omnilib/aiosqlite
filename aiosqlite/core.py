@@ -45,6 +45,7 @@ class Connection(Thread):
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
+        iter_chunk_size: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         super().__init__()
@@ -52,6 +53,7 @@ class Connection(Thread):
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
         self._tx: Queue = Queue()
+        self._iter_chunk_size = iter_chunk_size
 
         if loop is not None:
             warn(
@@ -353,6 +355,7 @@ class Connection(Thread):
 def connect(
     database: Union[str, Path],
     *,
+    iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
     **kwargs: Any
 ) -> Connection:
@@ -374,4 +377,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector)
+    return Connection(connector, iter_chunk_size)
