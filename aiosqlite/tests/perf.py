@@ -4,9 +4,8 @@
 """
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
-
+import string
 import time
-from pathlib import Path
 
 import aiounittest
 
@@ -14,12 +13,12 @@ import aiosqlite
 
 from .smoke import setup_logger
 
-TEST_DB = Path(":memory:")
+TEST_DB = ":memory:"
 TARGET = 2.0
 RESULTS = {}
 
 
-def timed(fn):
+def timed(fn, name=None):
     """
     Decorator for perf testing a block of async code.
 
@@ -29,7 +28,7 @@ def timed(fn):
     time has been reached, then close the generator and print perf results.
     """
 
-    name = fn.__name__
+    name = name or fn.__name__
 
     async def wrapper(*args, **kwargs):
         gen = fn(*args, **kwargs)
@@ -76,10 +75,6 @@ class PerfTest(aiounittest.AsyncTestCase):
             rate = count / duration
             name = name.replace("test_", "")
             print(f"{name:<25} {count:>10}  {duration:>7.1f}s  {rate:>9.1f}/s")
-
-    def setUp(self):
-        if TEST_DB.exists():
-            TEST_DB.unlink()
 
     @timed
     async def test_atomics(self):
@@ -152,3 +147,32 @@ class PerfTest(aiounittest.AsyncTestCase):
             while True:
                 yield
                 assert len(await db.execute_fetchall("select i, k from perf")) == 100
+
+    async def test_iterable_cursor_perf(self):
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute(
+                "create table ic_perf ("
+                "i integer primary key asc, k integer, a integer, b integer, c char(16))"
+            )
+            for batch in range(128):  # add 128k rows
+                r_start = batch * 1024
+                await db.executemany(
+                    "insert into ic_perf (k, a, b, c) values(?, 1, 2, ?)",
+                    [
+                        *[
+                            (i, string.ascii_lowercase)
+                            for i in range(r_start, r_start + 1024)
+                        ]
+                    ],
+                )
+                await db.commit()
+
+            async def test_perf(chunk_size: int):
+                while True:
+                    async with db.execute("SELECT * FROM ic_perf") as cursor:
+                        cursor.iter_chunk_size = chunk_size
+                        async for _ in cursor:
+                            yield
+
+            for chunk_size in [2 ** i for i in range(4, 11)]:
+                await timed(test_perf, f"iterable_cursor @ {chunk_size}")(chunk_size)

@@ -3,7 +3,6 @@
 import asyncio
 import sqlite3
 import sys
-import time
 from pathlib import Path
 from sqlite3 import OperationalError
 from threading import Thread
@@ -135,56 +134,6 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 rows.append(row)
 
         assert len(rows) == 10
-
-    async def test_iterable_cursor_perf(self):
-        QUERY = "SELECT * FROM ic_perf"
-
-        def fill_db():
-            with sqlite3.connect(str(TEST_DB)) as db:
-                db.execute(
-                    "create table ic_perf ("
-                    "i integer primary key asc, k integer, a integer, b integer, c char(16))"
-                )
-                for batch in range(128):  # add 128k rows
-                    r_start = batch * 1024
-                    db.executemany(
-                        "insert into ic_perf (k, a, b, c) values(?, 1, 2, 'abcdefghijklmno')",
-                        [*[[i] for i in range(r_start, r_start + 1024)]],
-                    )
-                    db.commit()
-
-        def native():
-            with sqlite3.connect(str(TEST_DB)) as db:
-                cursor = db.execute(QUERY)
-                try:
-                    start = time.time()
-                    rows = 0
-                    for _ in cursor:
-                        rows += 1
-                    return time.time() - start, rows
-                finally:
-                    cursor.close()
-
-        async def aio():
-            async with aiosqlite.connect(TEST_DB) as db, db.execute(QUERY) as cursor:
-                start = time.time()
-                rows = 0
-                async for _ in cursor:
-                    rows += 1
-                return time.time() - start, rows
-
-        await asyncio.get_event_loop().run_in_executor(None, fill_db)
-        await asyncio.sleep(1)
-        native_time, native_rows = await asyncio.get_event_loop().run_in_executor(
-            None, native
-        )
-        aio_time, aio_rows = await aio()
-        print(f"Rows: {aio_rows} / {native_rows}")
-        assert aio_rows == native_rows
-        print("Time: %.3f / %.3f" % (aio_time, native_time))
-        assert (
-            aio_time / native_time < 3.0
-        )  # generously, should be roughly the same, 1.0
 
     async def test_multi_loop_usage(self):
         results = {}
