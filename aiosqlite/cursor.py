@@ -16,9 +16,9 @@ class Cursor:
 
     def __aiter__(self) -> AsyncIterator[sqlite3.Row]:
         """The cursor proxy is also an async iterator."""
-        return self.__fetch_chunked()
+        return self._fetch_chunked()
 
-    async def __fetch_chunked(self):
+    async def _fetch_chunked(self):
         while True:
             rows = await self.fetchmany(self.iter_chunk_size)
             if not rows:
