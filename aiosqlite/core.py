@@ -104,7 +104,7 @@ class Connection(Thread):
 
                 get_loop(future).call_soon_threadsafe(set_result, future, result)
             except BaseException as e:
-                LOG.info("returning exception %s", e)
+                LOG.debug("returning exception %s", e)
 
                 def set_exception(fut, e):
                     if not fut.done():
