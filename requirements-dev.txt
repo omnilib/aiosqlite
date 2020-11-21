@@ -6,6 +6,6 @@ coverage[toml]==5.3
 flit==3.0.0
 mypy==0.790
 pylint==2.6.0
-sphinx==3.3.0
+sphinx==3.3.1
 usort==0.6.0
 git+https://github.com/miyakogi/m2r
