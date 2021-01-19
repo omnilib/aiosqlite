@@ -359,9 +359,9 @@ class SmokeTest(aiounittest.AsyncTestCase):
 
         cursor = await db.execute("select 1, 2")
         await db.close()
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ValueError, "Connection closed"):
             await cursor.fetchall()
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(ValueError, "Connection closed"):
             await cursor.fetchall()
 
     async def test_cursor_on_closed_connection_loop(self):
@@ -376,7 +376,7 @@ class SmokeTest(aiounittest.AsyncTestCase):
         for task in tasks:
             try:
                 await task
-            except Exception:
+            except sqlite3.ProgrammingError:
                 pass
 
     @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
