@@ -9,6 +9,7 @@ import asyncio
 import logging
 import sqlite3
 import sys
+import warnings
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue
@@ -44,6 +45,7 @@ class Connection(Thread):
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
+        iter_chunk_size: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         super().__init__()
@@ -51,6 +53,7 @@ class Connection(Thread):
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
         self._tx: Queue = Queue()
+        self._iter_chunk_size = iter_chunk_size
 
         if loop is not None:
             warn(
@@ -98,10 +101,20 @@ class Connection(Thread):
                 LOG.debug("executing %s", function)
                 result = function()
                 LOG.debug("returning %s", result)
-                get_loop(future).call_soon_threadsafe(future.set_result, result)
+
+                def set_result(fut, result):
+                    if not fut.done():
+                        fut.set_result(result)
+
+                get_loop(future).call_soon_threadsafe(set_result, future, result)
             except BaseException as e:
-                LOG.exception("returning exception %s", e)
-                get_loop(future).call_soon_threadsafe(future.set_exception, e)
+                LOG.debug("returning exception %s", e)
+
+                def set_exception(fut, e):
+                    if not fut.done():
+                        fut.set_exception(e)
+
+                get_loop(future).call_soon_threadsafe(set_exception, future, e)
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
@@ -157,9 +170,11 @@ class Connection(Thread):
         try:
             await self._execute(self._conn.close)
         except Exception:
-            LOG.exception("exception occurred while closing connection")
-        self._running = False
-        self._connection = None
+            LOG.info("exception occurred while closing connection")
+            raise
+        finally:
+            self._running = False
+            self._connection = None
 
     @contextmanager
     async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
@@ -205,12 +220,38 @@ class Connection(Thread):
         """Interrupt pending queries."""
         return self._conn.interrupt()
 
-    async def create_function(self, name: str, num_params: int, func: Callable) -> None:
-        """Create user-defined function that can be later used
+    async def create_function(
+        self, name: str, num_params: int, func: Callable, deterministic: bool = False
+    ) -> None:
+        """
+        Create user-defined function that can be later used
         within SQL statements. Must be run within the same thread
         that query executions take place so instead of executing directly
-        against the connection, we defer this to `run` function."""
-        await self._execute(self._conn.create_function, name, num_params, func)
+        against the connection, we defer this to `run` function.
+
+        In Python 3.8 and above, if *deterministic* is true, the created
+        function is marked as deterministic, which allows SQLite to perform
+        additional optimizations. This flag is supported by SQLite 3.8.3 or
+        higher, ``NotSupportedError`` will be raised if used with older
+        versions.
+        """
+        if sys.version_info >= (3, 8):
+            await self._execute(
+                self._conn.create_function,
+                name,
+                num_params,
+                func,
+                deterministic=deterministic,
+            )
+        else:
+            if deterministic:
+                warnings.warn(
+                    "Deterministic function support is only available on "
+                    'Python 3.8+. Function "{}" will be registered as '
+                    "non-deterministic as per SQLite defaults.".format(name)
+                )
+
+            await self._execute(self._conn.create_function, name, num_params, func)
 
     @property
     def in_transaction(self) -> bool:
@@ -333,6 +374,7 @@ class Connection(Thread):
 def connect(
     database: Union[str, Path],
     *,
+    iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
     **kwargs: Any
 ) -> Connection:
@@ -354,4 +396,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector)
+    return Connection(connector, iter_chunk_size)

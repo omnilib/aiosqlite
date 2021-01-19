@@ -1,6 +1,30 @@
 aiosqlite
 =========
 
+v0.16.0
+-------
+
+Feature release
+
+* Improved performance for async iteration on cursors (#34, #86)
+* Support for deterministic user functions in Python 3.8+ (#81, #83, #84)
+* Reduced logging severity for exceptions returned from children (#75, #76)
+* Fix InvalidStateError when setting future results (#80, #89)
+* Allow user to catch exceptions from `close()` (#68, #90)
+* Tested under Python 3.9 (#91)
+
+```
+$ git shortlog -s v0.15.0...v0.16.0
+     3	Caleb Hattingh
+     1	Groosha
+    14	John Reese
+     1	Lonami
+     4	Lonami Exo
+     4	ZsoltM
+     1	pyup.io bot
+```
+
+
 v0.15.0
 -------
 
@@ -277,5 +301,4 @@ Beta version 0.2.0
 $ git shortlog -s c606de200b7afe6d73a6e2900557d622c62ed78c...v0.2.0
      1	John Reese
 ```
-
 
