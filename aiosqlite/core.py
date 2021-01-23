@@ -96,7 +96,7 @@ class Connection(Thread):
             try:
                 LOG.debug("executing %s", function)
                 result = function()
-                LOG.debug("returning %s", result)
+                LOG.debug("operation %s completed", function)
 
                 def set_result(fut, result):
                     if not fut.done():
