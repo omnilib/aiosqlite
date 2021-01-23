@@ -1,6 +1,22 @@
 aiosqlite
 =========
 
+v0.16.1
+-------
+
+Bug fix release
+
+- Reduce logging severity for exceptions (#93)
+- Stop logging result objects; they can be big (#102)
+
+```
+$ git shortlog -s v0.16.0...v0.16.1
+     1	Alexei Chetroi
+     3	John Reese
+     3	pyup.io bot
+```
+
+
 v0.16.0
 -------
 
