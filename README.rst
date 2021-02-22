@@ -51,7 +51,8 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``::
     async with aiosqlite.connect(...) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute('SELECT * FROM some_table') as cursor:
-            value = row['column']
+            async for row in cursor:
+                value = row['column']
 
         await db.execute('INSERT INTO foo some_table')
         assert db.total_changes > 0
