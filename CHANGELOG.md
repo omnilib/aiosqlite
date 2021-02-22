@@ -1,6 +1,23 @@
 aiosqlite
 =========
 
+v0.17.0
+-------
+
+Feature release
+
+* Connection objects now raise ValueError when closed and a command is executed (#79)
+* Fix documented examples in readme (#104)
+
+```
+$ git shortlog -s v0.16.1...v0.17.0
+     3	John Reese
+     5	Mariano Sorgente
+     1	Nuno André
+     1	pyup.io bot
+```
+
+
 v0.16.1
 -------
 
