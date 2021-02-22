@@ -376,6 +376,7 @@ def connect(
     *,
     iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
+    cls: Type[Connection] = Connection,
     **kwargs: Any
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
@@ -396,4 +397,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector, iter_chunk_size)
+    return cls(connector, iter_chunk_size)
