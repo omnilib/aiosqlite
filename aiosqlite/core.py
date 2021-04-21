@@ -47,6 +47,7 @@ class Connection(Thread):
         connector: Callable[[], sqlite3.Connection],
         iter_chunk_size: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        parent_loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         super().__init__()
         self._running = True
@@ -54,6 +55,7 @@ class Connection(Thread):
         self._connector = connector
         self._tx: Queue = Queue()
         self._iter_chunk_size = iter_chunk_size
+        self._parent_loop = parent_loop
 
         if loop is not None:
             warn(
@@ -87,7 +89,7 @@ class Connection(Thread):
 
         :meta private:
         """
-        while True:
+        while self._parent_loop is None or not self._parent_loop.is_closed():
             # Continues running until all queue items are processed,
             # even after connection is closed (so we can finalize all
             # futures)
@@ -115,6 +117,19 @@ class Connection(Thread):
                         fut.set_exception(e)
 
                 get_loop(future).call_soon_threadsafe(set_exception, future, e)
+
+        # Clean up within this thread only if the parent event loop exits ungracefully
+        if not self._running or self._connection is None or self._parent_loop is None:
+            return
+
+        try:
+            self._conn.close()
+        except Exception:
+            LOG.info("exception occurred while closing connection")
+            raise
+        finally:
+            self._running = False
+            self._connection = None
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
@@ -376,6 +391,7 @@ def connect(
     *,
     iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
+    parent_loop: Optional[asyncio.AbstractEventLoop] = None,
     **kwargs: Any
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
@@ -396,4 +412,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector, iter_chunk_size)
+    return Connection(connector, iter_chunk_size, parent_loop=parent_loop)

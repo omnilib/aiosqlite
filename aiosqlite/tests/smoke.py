@@ -3,6 +3,7 @@
 import asyncio
 import sqlite3
 import sys
+import time
 from pathlib import Path
 from sqlite3 import OperationalError
 from threading import Thread
@@ -465,3 +466,20 @@ class SmokeTest(aiounittest.AsyncTestCase):
         ) as db2:
             with self.assertRaisesRegex(RuntimeError, "backup().+3.7"):
                 await db1.backup(db2)
+
+    async def test_no_close_with_parent_event_loop(self):
+        def runner():
+            loop = asyncio.new_event_loop()
+            db = loop.run_until_complete(aiosqlite.connect(TEST_DB, parent_loop=loop))
+            loop.close()
+
+            # Wait long enough for the queue `get` timeout to elapse
+            time.sleep(0.2)
+
+            # Database has been closed
+            with self.assertRaises(ValueError):
+                db.in_transaction
+
+        thread = Thread(target=runner)
+        thread.start()
+        thread.join()
