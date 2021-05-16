@@ -85,7 +85,7 @@ class PerfTest(aiounittest.AsyncTestCase):
             while True:
                 yield
                 async with db.execute("select last_insert_rowid()") as cursor:
-                    _row_id = await cursor.fetchone()
+                    await cursor.fetchone()
 
     @timed
     async def test_inserts(self):

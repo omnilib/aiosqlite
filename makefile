@@ -19,7 +19,7 @@ format:
 	python -m black aiosqlite
 
 lint:
-	python -m pylint --rcfile .pylint aiosqlite/*.py
+	python -m flake8 aiosqlite
 	python -m usort check aiosqlite
 	python -m black --check aiosqlite
 
