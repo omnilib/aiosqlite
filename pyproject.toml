@@ -8,7 +8,7 @@ author = "John Reese"
 author-email = "john@noswap.com"
 description-file = "README.rst"
 home-page = "https://aiosqlite.omnilib.dev"
-requires = ["typing_extensions>=3.7.2"]
+requires = []
 requires-python = ">=3.6"
 classifiers = [
     "Development Status :: 5 - Production/Stable",

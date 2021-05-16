@@ -3,9 +3,7 @@
 
 
 from functools import wraps
-from typing import Any, Callable, Coroutine, Generator, TypeVar
-
-from typing_extensions import AsyncContextManager
+from typing import Any, AsyncContextManager, Callable, Coroutine, Generator, TypeVar
 
 from .cursor import Cursor
 
