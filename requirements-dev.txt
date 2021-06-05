@@ -1,6 +1,6 @@
 aiounittest==1.4.0
 attribution==1.5.2
-black==21.5b1
+black==21.5b2
 codecov==2.1.11
 coverage[toml]==5.5
 flake8==3.9.2
