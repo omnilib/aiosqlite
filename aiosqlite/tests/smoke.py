@@ -8,7 +8,10 @@ from sqlite3 import OperationalError
 from threading import Thread
 from unittest import skipIf, SkipTest, skipUnless
 
-import aiounittest
+if sys.version_info < (3, 8):
+    from aiounittest import AsyncTestCase as TestCase
+else:
+    from unittest import IsolatedAsyncioTestCase as TestCase
 
 import aiosqlite
 from .helpers import setup_logger
@@ -22,7 +25,7 @@ except ImportError:
     default_text_factory = str
 
 
-class SmokeTest(aiounittest.AsyncTestCase):
+class SmokeTest(TestCase):
     @classmethod
     def setUpClass(cls):
         setup_logger()

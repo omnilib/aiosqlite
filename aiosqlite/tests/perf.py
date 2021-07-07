@@ -5,10 +5,14 @@
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
 import string
+import sys
 import tempfile
 import time
 
-import aiounittest
+if sys.version_info < (3, 8):
+    from aiounittest import AsyncTestCase as TestCase
+else:
+    from unittest import IsolatedAsyncioTestCase as TestCase
 
 import aiosqlite
 from .smoke import setup_logger
@@ -61,7 +65,7 @@ def timed(fn, name=None):
     return wrapper
 
 
-class PerfTest(aiounittest.AsyncTestCase):
+class PerfTest(TestCase):
     @classmethod
     def setUpClass(cls):
         print(f"Running perf tests for at least {TARGET:.1f}s each...")
