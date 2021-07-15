@@ -23,11 +23,15 @@ aiosqlite\: Sqlite for AsyncIO
    :target: https://github.com/ambv/black
    :alt: Code Style Black
 
+.. highlight:: rst
+
 aiosqlite provides a friendly, async interface to sqlite databases.
 
 It replicates the standard ``sqlite3`` module, but with async versions
 of all the standard connection and cursor methods, plus context managers for
 automatically closing connections and cursors::
+
+ .. code:: python
 
     async with aiosqlite.connect(...) as db:
         await db.execute("INSERT INTO some_table ...")
@@ -39,6 +43,8 @@ automatically closing connections and cursors::
 
 It can also be used in the traditional, procedural manner::
 
+ .. code:: python
+
     db = await aiosqlite.connect(...)
     cursor = await db.execute('SELECT * FROM some_table')
     row = await cursor.fetchone()
@@ -47,6 +53,8 @@ It can also be used in the traditional, procedural manner::
     await db.close()
 
 aiosqlite also replicates most of the advanced features of ``sqlite3``::
+
+ .. code:: python
 
     async with aiosqlite.connect(...) as db:
         db.row_factory = aiosqlite.Row
@@ -67,7 +75,6 @@ You can install it from PyPI:
 .. code-block:: bash
 
     $ pip install aiosqlite
-
 
 Details
 -------
