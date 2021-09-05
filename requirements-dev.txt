@@ -1,12 +1,12 @@
 aiounittest==1.4.0
 attribution==1.5.2
-black==21.7b0
-codecov==2.1.11
+black==21.8b0
+codecov==2.1.12
 coverage[toml]==5.5
 flake8==3.9.2
 flake8-bugbear==21.4.3
-flit==3.2.0
+flit==3.3.0
 mypy==0.910
-sphinx==4.1.1
+sphinx==4.1.2
 usort==0.6.2
 git+https://github.com/miyakogi/m2r
