@@ -7,6 +7,6 @@ flake8==3.9.2
 flake8-bugbear==21.9.1
 flit==3.3.0
 mypy==0.910
-sphinx==4.1.2
+sphinx==4.2.0
 usort==0.6.2
 git+https://github.com/miyakogi/m2r
