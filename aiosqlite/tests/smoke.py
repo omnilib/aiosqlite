@@ -276,11 +276,11 @@ class SmokeTest(aiounittest.AsyncTestCase):
                 await db.load_extension("test")
             except OperationalError as e:
                 assert "not authorized" not in e.args
-            except AttributeError:
+            except AttributeError as e:
                 raise SkipTest(
                     "python was not compiled with sqlite3 "
                     "extension support, so we can't test it"
-                )
+                ) from e
 
     async def test_set_progress_handler(self):
         """
