@@ -10,17 +10,17 @@ from sqlite3 import (  # pylint: disable=redefined-builtin
     NotSupportedError,
     OperationalError,
     ProgrammingError,
-    Row,
-    Warning,
     register_adapter,
     register_converter,
+    Row,
     sqlite_version,
     sqlite_version_info,
+    Warning,
 )
 
 __author__ = "John Reese"
 from .__version__ import __version__
-from .core import Connection, Cursor, connect
+from .core import connect, Connection, Cursor
 
 __all__ = [
     "__version__",

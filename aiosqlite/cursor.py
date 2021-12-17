@@ -2,7 +2,7 @@
 # Licensed under the MIT license
 
 import sqlite3
-from typing import TYPE_CHECKING, Any, AsyncIterator, Iterable, Optional, Tuple
+from typing import Any, AsyncIterator, Iterable, Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .core import Connection

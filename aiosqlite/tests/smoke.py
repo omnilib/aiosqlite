@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from sqlite3 import OperationalError
 from threading import Thread
-from unittest import SkipTest, skipIf, skipUnless
+from unittest import skipIf, SkipTest, skipUnless
 
 import aiounittest
 
