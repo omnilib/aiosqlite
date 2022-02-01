@@ -2,7 +2,7 @@ aiounittest==1.4.1
 attribution==1.5.2
 black==21.12b0
 codecov==2.1.12
-coverage[toml]==6.2
+coverage[toml]==6.3
 flake8==4.0.1
 flake8-bugbear==21.11.29
 flit==3.6.0
