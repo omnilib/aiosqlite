@@ -432,10 +432,10 @@ class SmokeTest(aiounittest.AsyncTestCase):
         # the entire db should be removed so foo should not be present below
         async with aiosqlite.connect(url) as db2:
             async with db2.execute(
-               """
-               select name from sqlite_master
-               where type ='table' and name not like 'sqlite_%'
-               """
+                """
+                select name from sqlite_master
+                where type ='table' and name not like 'sqlite_%'
+                """
             ) as cursor:
                 rows = await cursor.fetchall()
 
