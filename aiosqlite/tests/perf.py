@@ -173,5 +173,5 @@ class PerfTest(aiounittest.AsyncTestCase):
                         async for _ in cursor:
                             yield
 
-            for chunk_size in [2 ** i for i in range(4, 11)]:
+            for chunk_size in [2**i for i in range(4, 11)]:
                 await timed(test_perf, f"iterable_cursor @ {chunk_size}")(chunk_size)
