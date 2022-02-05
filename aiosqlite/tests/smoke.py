@@ -418,6 +418,29 @@ class SmokeTest(aiounittest.AsyncTestCase):
             except sqlite3.ProgrammingError:
                 pass
 
+    async def test_memory_db_clears(self):
+        """Confirm that closing a memory db results in the database being cleared.
+
+        https://www.sqlite.org/inmemorydb.html
+        > The database is automatically deleted and memory is reclaimed when the last
+        > connection to the database closes.
+        """
+        url = "file:test_memory_db_clears?mode=memory&cache=shared"
+        async with aiosqlite.connect(url) as db1:
+            await db1.execute("create table foo (i integer)")
+
+        # the entire db should be removed so foo should not be present below
+        async with aiosqlite.connect(url) as db2:
+            async with db2.execute(
+               """
+               select name from sqlite_master
+               where type ='table' and name not like 'sqlite_%'
+               """
+            ) as cursor:
+                rows = await cursor.fetchall()
+
+        self.assertEqual(rows, [])
+
     @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
     async def test_backup_aiosqlite(self):
         def progress(a, b, c):
