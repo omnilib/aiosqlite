@@ -80,7 +80,7 @@ class PerfTest(aiounittest.AsyncTestCase):
     async def test_connection_memory(self):
         while True:
             yield
-            async with aiosqlite.connect(TEST_DB) as db:
+            async with aiosqlite.connect(TEST_DB):
                 pass
 
     @timed
@@ -98,7 +98,7 @@ class PerfTest(aiounittest.AsyncTestCase):
 
             while True:
                 yield
-                async with aiosqlite.connect(path) as db:
+                async with aiosqlite.connect(path):
                     pass
 
     @timed
