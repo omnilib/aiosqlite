@@ -1,27 +1,18 @@
 aiosqlite\: Sqlite for AsyncIO
 ==============================
 
-.. image:: https://img.shields.io/pypi/v/aiosqlite.svg
-   :target: https://pypi.org/project/aiosqlite
-   :alt: PyPI Release
 .. image:: https://readthedocs.org/projects/aiosqlite/badge/?version=latest
    :target: https://aiosqlite.omnilib.dev/en/latest/?badge=latest
    :alt: Documentation Status
+.. image:: https://img.shields.io/pypi/v/aiosqlite.svg
+   :target: https://pypi.org/project/aiosqlite
+   :alt: PyPI Release
 .. image:: https://img.shields.io/badge/change-log-blue
    :target: https://github.com/omnilib/aiosqlite/blob/master/CHANGELOG.md
    :alt: Changelog
-.. image:: https://img.shields.io/codecov/c/github/omnilib/aiosqlite/master.svg
-   :target: https://codecov.io/gh/omnilib/aiosqlite
-   :alt: Code Coverage
-.. image:: https://github.com/omnilib/aiosqlite/workflows/Build/badge.svg
-   :target: https://github.com/omnilib/aiosqlite/actions
-   :alt: Build Status
 .. image:: https://img.shields.io/pypi/l/aiosqlite.svg
    :target: https://github.com/omnilib/aiosqlite/blob/master/LICENSE
    :alt: MIT Licensed
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/ambv/black
-   :alt: Code Style Black
 
 aiosqlite provides a friendly, async interface to sqlite databases.
 
