@@ -5,6 +5,7 @@
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
 import string
+import tempfile
 import time
 
 import aiounittest
@@ -74,6 +75,31 @@ class PerfTest(aiounittest.AsyncTestCase):
             rate = count / duration
             name = name.replace("test_", "")
             print(f"{name:<25} {count:>10}  {duration:>7.1f}s  {rate:>9.1f}/s")
+
+    @timed
+    async def test_connection_memory(self):
+        while True:
+            yield
+            async with aiosqlite.connect(TEST_DB) as db:
+                pass
+
+    @timed
+    async def test_connection_file(self):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            path = tf.name
+            tf.close()
+
+            async with aiosqlite.connect(path) as db:
+                await db.execute(
+                    "create table perf (i integer primary key asc, k integer)"
+                )
+                await db.execute("insert into perf (k) values (2), (3)")
+                await db.commit()
+
+            while True:
+                yield
+                async with aiosqlite.connect(path) as db:
+                    pass
 
     @timed
     async def test_atomics(self):
