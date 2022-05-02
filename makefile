@@ -32,11 +32,14 @@ test:
 perf:
 	python -m unittest -v aiosqlite.tests.perf
 
+.PHONY: html
 html: .venv README.rst docs/*.rst docs/conf.py
 	.venv/bin/sphinx-build -an -b html docs html
 
+.PHONY: clean
 clean:
 	rm -rf build dist html README MANIFEST *.egg-info
 
+.PHONY: distclean
 distclean: clean
 	rm -rf .venv
