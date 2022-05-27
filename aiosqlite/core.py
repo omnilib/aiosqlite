@@ -20,6 +20,7 @@ from typing import (
     Callable,
     Generator,
     Iterable,
+    Literal,
     Optional,
     Type,
     Union,
