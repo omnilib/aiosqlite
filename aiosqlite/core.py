@@ -20,12 +20,16 @@ from typing import (
     Callable,
     Generator,
     Iterable,
-    Literal,
     Optional,
     Type,
     Union,
 )
 from warnings import warn
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 from .context import contextmanager
 from .cursor import Cursor
