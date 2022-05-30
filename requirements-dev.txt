@@ -5,7 +5,7 @@ coverage[toml]==6.2
 flake8==4.0.1
 flake8-bugbear==22.4.25
 flit==3.7.1
-mypy==0.931
+mypy==0.960
 sphinx==4.3.2
 sphinx-mdinclude==0.5.1
 usort==1.0.2
