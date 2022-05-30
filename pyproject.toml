@@ -9,7 +9,7 @@ author-email = "john@noswap.com"
 description-file = "README.rst"
 home-page = "https://aiosqlite.omnilib.dev"
 requires = [
-    "typing_extensions >= 4.0; python_version < '3.11'",
+    "typing_extensions >= 4.0; python_version < '3.8'",
 ]
 requires-python = ">=3.6"
 classifiers = [

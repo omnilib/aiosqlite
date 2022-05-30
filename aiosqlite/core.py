@@ -20,6 +20,7 @@ from typing import (
     Callable,
     Generator,
     Iterable,
+    Literal,
     Optional,
     Type,
     Union,
@@ -32,6 +33,9 @@ from .cursor import Cursor
 __all__ = ["connect", "Connection", "Cursor"]
 
 LOG = logging.getLogger("aiosqlite")
+
+
+IsolationLevel = Optional[Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]]
 
 
 def get_loop(future: asyncio.Future) -> asyncio.AbstractEventLoop:
@@ -258,11 +262,11 @@ class Connection(Thread):
         return self._conn.in_transaction
 
     @property
-    def isolation_level(self) -> Optional[str]:
+    def isolation_level(self) -> IsolationLevel:
         return self._conn.isolation_level
 
     @isolation_level.setter
-    def isolation_level(self, value: Optional[str]) -> None:
+    def isolation_level(self, value: IsolationLevel) -> None:
         self._conn.isolation_level = value
 
     @property
