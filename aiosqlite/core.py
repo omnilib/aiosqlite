@@ -26,12 +26,20 @@ from typing import (
 )
 from warnings import warn
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from .context import contextmanager
 from .cursor import Cursor
 
 __all__ = ["connect", "Connection", "Cursor"]
 
 LOG = logging.getLogger("aiosqlite")
+
+
+IsolationLevel = Optional[Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]]
 
 
 def get_loop(future: asyncio.Future) -> asyncio.AbstractEventLoop:
@@ -258,11 +266,11 @@ class Connection(Thread):
         return self._conn.in_transaction
 
     @property
-    def isolation_level(self) -> str:
+    def isolation_level(self) -> IsolationLevel:
         return self._conn.isolation_level
 
     @isolation_level.setter
-    def isolation_level(self, value: str) -> None:
+    def isolation_level(self, value: IsolationLevel) -> None:
         self._conn.isolation_level = value
 
     @property
