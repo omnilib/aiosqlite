@@ -135,7 +135,12 @@ class Connection(Thread):
         self._tx.put_nowait((future, function))
 
         return await future
-
+    
+    @property
+    def is_connected(self) -> bool:
+        """Returns if a Connection to a sqlite database was established."""
+        return self._connection is not None
+    
     async def _connect(self) -> "Connection":
         """Connect to the actual sqlite database."""
         if self._connection is None:
