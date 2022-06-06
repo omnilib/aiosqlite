@@ -282,11 +282,11 @@ class Connection(Thread):
         self._conn.row_factory = factory
 
     @property
-    def text_factory(self) -> Type:
+    def text_factory(self) -> Callable[[bytes], Any]:
         return self._conn.text_factory
 
     @text_factory.setter
-    def text_factory(self, factory: Type) -> None:
+    def text_factory(self, factory: Callable[[bytes], Any]) -> None:
         self._conn.text_factory = factory
 
     @property
