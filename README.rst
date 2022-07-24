@@ -19,7 +19,7 @@ aiosqlite provides a friendly, async interface to sqlite databases.
 It replicates the standard ``sqlite3`` module, but with async versions
 of all the standard connection and cursor methods, plus context managers for
 automatically closing connections and cursors::
-
+```python
     async with aiosqlite.connect(...) as db:
         await db.execute("INSERT INTO some_table ...")
         await db.commit()
@@ -27,18 +27,18 @@ automatically closing connections and cursors::
         async with db.execute("SELECT * FROM some_table") as cursor:
             async for row in cursor:
                 ...
-
+```
 It can also be used in the traditional, procedural manner::
-
+```python
     db = await aiosqlite.connect(...)
     cursor = await db.execute('SELECT * FROM some_table')
     row = await cursor.fetchone()
     rows = await cursor.fetchall()
     await cursor.close()
     await db.close()
-
+```
 aiosqlite also replicates most of the advanced features of ``sqlite3``::
-
+```python
     async with aiosqlite.connect(...) as db:
         db.row_factory = aiosqlite.Row
         async with db.execute('SELECT * FROM some_table') as cursor:
@@ -47,7 +47,7 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``::
 
         await db.execute('INSERT INTO foo some_table')
         assert db.total_changes > 0
-
+```
 
 Install
 -------
