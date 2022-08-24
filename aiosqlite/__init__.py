@@ -1,4 +1,4 @@
-# Copyright 2018 John Reese
+# Copyright 2022 Amethyst Reese
 # Licensed under the MIT license
 
 """asyncio bridge to the standard sqlite3 module"""
@@ -18,7 +18,7 @@ from sqlite3 import (  # pylint: disable=redefined-builtin
     Warning,
 )
 
-__author__ = "John Reese"
+__author__ = "Amethyst Reese"
 from .__version__ import __version__
 from .core import connect, Connection, Cursor
 

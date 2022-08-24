@@ -4,8 +4,8 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
 module = "aiosqlite"
-author = "John Reese"
-author-email = "john@noswap.com"
+author = "Amethyst Reese"
+author-email = "amy@noswap.com"
 description-file = "README.rst"
 home-page = "https://aiosqlite.omnilib.dev"
 requires = [

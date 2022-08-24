@@ -78,7 +78,7 @@ async iterators to query results.
 License
 -------
 
-aiosqlite is copyright `John Reese <https://jreese.sh>`_, and licensed under the
+aiosqlite is copyright `Amethyst Reese <https://noswap.com>`_, and licensed under the
 MIT license.  I am providing code in this repository to you under an open source
 license.  This is my personal repository; the license you receive to my code
 is from me and not from my employer. See the `LICENSE`_ file for details.
