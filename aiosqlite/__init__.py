@@ -9,7 +9,7 @@ from sqlite3 import (  # pylint: disable=redefined-builtin
     IntegrityError,
     NotSupportedError,
     OperationalError,
-    paramstyle
+    paramstyle,
     ProgrammingError,
     register_adapter,
     register_converter,
