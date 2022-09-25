@@ -9,6 +9,7 @@ from sqlite3 import (  # pylint: disable=redefined-builtin
     IntegrityError,
     NotSupportedError,
     OperationalError,
+    paramstyle,
     ProgrammingError,
     register_adapter,
     register_converter,
@@ -24,6 +25,7 @@ from .core import connect, Connection, Cursor
 
 __all__ = [
     "__version__",
+    "paramstyle",
     "register_adapter",
     "register_converter",
     "sqlite_version",
