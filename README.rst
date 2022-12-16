@@ -52,7 +52,7 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``::
 Install
 -------
 
-aiosqlite is compatible with Python 3.6 and newer.
+aiosqlite is compatible with Python 3.7 and newer.
 You can install it from PyPI:
 
 .. code-block:: bash
