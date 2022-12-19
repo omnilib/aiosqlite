@@ -1,6 +1,31 @@
 aiosqlite
 =========
 
+v0.18.0
+-------
+
+Feature release
+
+- Added support for `paramstyle` (#197)
+- Better type hints for `isolation_level` (#172) and `text_factory` (#179)
+- Use stdlib typing module when possible (#114)
+- Replace aiounittest with stdlib on 3.8+
+- Docmentation improvements (#108)
+- Dropped support for Python 3.7, added support for Python 3.10 and 3.11 (#208)
+
+```
+$ git shortlog -s v0.17.0...v0.18.0
+    11	Amethyst Reese
+    20	John Reese
+     3	Nico0 Smart
+     3	Nicolas Martinez
+    37	dependabot[bot]
+     2	pandaninjas
+     6	pyup.io bot
+     1	vexelnet
+```
+
+
 v0.17.0
 -------
 
@@ -331,7 +356,7 @@ v0.2.0
 Beta version 0.2.0
 
 ```
-$ git shortlog -s c606de200b7afe6d73a6e2900557d622c62ed78c...v0.2.0
-     1	John Reese
+$ git shortlog -s v0.2.0
+    20	John Reese
 ```
 
