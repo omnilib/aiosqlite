@@ -69,6 +69,10 @@ class Connection(Thread):
                 DeprecationWarning,
             )
 
+    def _stop_running(self):
+        self._running = False
+        self._tx.put_nowait(None)
+
     @property
     def _conn(self) -> sqlite3.Connection:
         if self._connection is None:
@@ -99,12 +103,13 @@ class Connection(Thread):
             # Continues running until all queue items are processed,
             # even after connection is closed (so we can finalize all
             # futures)
-            try:
-                future, function = self._tx.get(timeout=0.1)
-            except Empty:
-                if self._running:
-                    continue
+
+            tx_item = self._tx.get()
+            if tx_item == None:
                 break
+
+            future, function = tx_item
+
             try:
                 LOG.debug("executing %s", function)
                 result = function()
@@ -144,7 +149,7 @@ class Connection(Thread):
                 self._tx.put_nowait((future, self._connector))
                 self._connection = await future
             except Exception:
-                self._running = False
+                self._stop_running()
                 self._connection = None
                 raise
 
@@ -181,7 +186,7 @@ class Connection(Thread):
             LOG.info("exception occurred while closing connection")
             raise
         finally:
-            self._running = False
+            self._stop_running()
             self._connection = None
 
     @contextmanager
