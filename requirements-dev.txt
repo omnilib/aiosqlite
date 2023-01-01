@@ -8,4 +8,4 @@ flit==3.7.1
 mypy==0.931
 sphinx==5.3.0; python_version >= '3.8'
 sphinx-mdinclude==0.5.3
-usort==1.0.2
+usort==1.0.5
