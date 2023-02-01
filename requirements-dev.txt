@@ -1,7 +1,7 @@
 aiounittest==1.4.1; python_version < '3.8'
 attribution==1.5.2
 black==22.12.0
-coverage[toml]==6.5.0
+coverage[toml]==7.1.0
 flake8==4.0.1
 flake8-bugbear==22.12.6
 flit==3.7.1
