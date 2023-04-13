@@ -2,16 +2,14 @@
 requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
-[tool.flit.metadata]
-module = "aiosqlite"
-author = "Amethyst Reese"
-author-email = "amy@noswap.com"
-description-file = "README.rst"
-home-page = "https://aiosqlite.omnilib.dev"
-requires = [
-    "typing_extensions >= 4.0; python_version < '3.8'",
+[project]
+name = "aiosqlite"
+readme = "README.rst"
+license = {file="LICENSE"}
+dynamic = ["version", "description"]
+authors = [
+    {name="Amethyst Reese", email="amy@n7.gg"},
 ]
-requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Framework :: AsyncIO",
@@ -19,9 +17,31 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Software Development :: Libraries",
 ]
+requires-python = ">=3.7"
+dependencies = [
+    "typing_extensions >= 4.0; python_version < '3.8'",
+]
 
-[tool.flit.metadata.urls]
-Documentation = "https://aiosqlite.omnilib.dev/en/latest/"
+[project.optional-dependencies]
+dev = [
+    "aiounittest==1.4.1; python_version < '3.8'",
+    "attribution==1.6.2",
+    "black==22.12.0",
+    "coverage[toml]==6.5.0",
+    "flake8==4.0.1",
+    "flake8-bugbear==22.12.6",
+    "flit==3.7.1",
+    "mypy==0.931",
+    "ufmt==2.1.0",
+    "usort==1.0.2",
+]
+docs = [
+    "sphinx==5.3.0; python_version >= '3.8'",
+    "sphinx-mdinclude==0.5.3",
+]
+
+[project.urls]
+Documentation = "https://aiosqlite.omnilib.dev"
 Github = "https://github.com/omnilib/aiosqlite"
 
 [tool.flit.sdist]
@@ -40,9 +60,9 @@ precision = 1
 show_missing = true
 skip_covered = true
 
-[tool.isort]
-line_length = 88
-multi_line_output = 3
-force_grid_wrap = false
-include_trailing_comma = true
-use_parentheses = true
+[tool.mypy]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiosqlite.tests.perf"
+follow_imports = "silent"

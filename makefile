@@ -1,28 +1,23 @@
 .venv:
 	python -m venv .venv
-	source .venv/bin/activate && make setup dev
+	source .venv/bin/activate && make install
 	echo 'run `source .venv/bin/activate` to develop aiosqlite'
 
 venv: .venv
 
-setup:
+install:
 	python -m pip install -U pip
-	python -m pip install -Ur requirements-dev.txt
-
-dev:
-	flit install --symlink
+	python -m pip install -Ue .[dev,docs]
 
 release: lint test clean
 	flit publish
 
 format:
-	python -m usort format aiosqlite
-	python -m black aiosqlite
+	python -m ufmt format aiosqlite
 
 lint:
 	python -m flake8 aiosqlite
-	python -m usort check aiosqlite
-	python -m black --check aiosqlite
+	python -m ufmt check aiosqlite
 
 test:
 	python -m coverage run -m aiosqlite.tests
