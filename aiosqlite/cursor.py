@@ -2,7 +2,7 @@
 # Licensed under the MIT license
 
 import sqlite3
-from typing import Any, AsyncIterator, Iterable, Optional, Tuple, TYPE_CHECKING
+from typing import Any, AsyncIterator, Iterable, Optional, Tuple, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .core import Connection
@@ -87,6 +87,14 @@ class Cursor:
     @property
     def description(self) -> Tuple[Tuple]:
         return self._cursor.description
+
+    @property
+    def row_factory(self) -> Optional[Type]:
+        return self._cursor.row_factory
+
+    @row_factory.setter
+    def row_factory(self, factory: Optional[Type]) -> None:
+        self._cursor.row_factory = factory
 
     @property
     def connection(self) -> sqlite3.Connection:

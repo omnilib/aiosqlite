@@ -242,6 +242,17 @@ class SmokeTest(TestCase):
                 with self.assertRaises(TypeError):
                     _ = row["k"]
 
+            async with db.cursor() as cursor:
+                cursor.row_factory = aiosqlite.Row
+                self.assertEqual(cursor.row_factory, aiosqlite.Row)
+                await cursor.execute("select * from test_properties")
+                row = await cursor.fetchone()
+                self.assertIsInstance(row, aiosqlite.Row)
+                self.assertEqual(row[1], 1)
+                self.assertEqual(row[2], "hi")
+                self.assertEqual(row["k"], 1)
+                self.assertEqual(row["d"], "hi")
+
             db.row_factory = aiosqlite.Row
             db.text_factory = bytes
             self.assertEqual(db.row_factory, aiosqlite.Row)
