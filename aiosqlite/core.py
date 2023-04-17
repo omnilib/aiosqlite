@@ -273,11 +273,11 @@ class Connection(Thread):
         self._conn.isolation_level = value
 
     @property
-    def row_factory(self) -> "Optional[Type]":  # py3.5.2 compat (#24)
+    def row_factory(self) -> Optional[Type]:
         return self._conn.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: "Optional[Type]") -> None:  # py3.5.2 compat (#24)
+    def row_factory(self, factory: Optional[Type]) -> None:
         self._conn.row_factory = factory
 
     @property
