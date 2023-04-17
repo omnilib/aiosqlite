@@ -354,7 +354,7 @@ class Connection(Thread):
         pages: int = 0,
         progress: Optional[Callable[[int, int, int], None]] = None,
         name: str = "main",
-        sleep: float = 0.250
+        sleep: float = 0.250,
     ) -> None:
         """
         Make a backup of the current database to the target database.
@@ -382,7 +382,7 @@ def connect(
     *,
     iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
 
