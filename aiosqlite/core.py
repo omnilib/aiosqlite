@@ -254,7 +254,8 @@ class Connection(Thread):
                 warnings.warn(
                     "Deterministic function support is only available on "
                     'Python 3.8+. Function "{}" will be registered as '
-                    "non-deterministic as per SQLite defaults.".format(name)
+                    "non-deterministic as per SQLite defaults.".format(name),
+                    stacklevel=2,
                 )
 
             await self._execute(self._conn.create_function, name, num_params, func)
