@@ -22,7 +22,7 @@ lint:
 test:
 	python -m coverage run -m aiosqlite.tests
 	python -m coverage report
-	python -m mypy aiosqlite/*.py
+	python -m mypy -p aiosqlite
 
 perf:
 	python -m unittest -v aiosqlite.tests.perf

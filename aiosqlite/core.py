@@ -76,16 +76,12 @@ class Connection(Thread):
 
         return self._connection
 
-    def _execute_insert(
-        self, sql: str, parameters: Iterable[Any]
-    ) -> Optional[sqlite3.Row]:
+    def _execute_insert(self, sql: str, parameters: Any) -> Optional[sqlite3.Row]:
         cursor = self._conn.execute(sql, parameters)
         cursor.execute("SELECT last_insert_rowid()")
         return cursor.fetchone()
 
-    def _execute_fetchall(
-        self, sql: str, parameters: Iterable[Any]
-    ) -> Iterable[sqlite3.Row]:
+    def _execute_fetchall(self, sql: str, parameters: Any) -> Iterable[sqlite3.Row]:
         cursor = self._conn.execute(sql, parameters)
         return cursor.fetchall()
 
@@ -185,7 +181,9 @@ class Connection(Thread):
             self._connection = None
 
     @contextmanager
-    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> Cursor:
+    async def execute(
+        self, sql: str, parameters: Optional[Iterable[Any]] = None
+    ) -> Cursor:
         """Helper to create a cursor and execute the given query."""
         if parameters is None:
             parameters = []
@@ -194,7 +192,7 @@ class Connection(Thread):
 
     @contextmanager
     async def execute_insert(
-        self, sql: str, parameters: Iterable[Any] = None
+        self, sql: str, parameters: Optional[Iterable[Any]] = None
     ) -> Optional[sqlite3.Row]:
         """Helper to insert and get the last_insert_rowid."""
         if parameters is None:
@@ -203,7 +201,7 @@ class Connection(Thread):
 
     @contextmanager
     async def execute_fetchall(
-        self, sql: str, parameters: Iterable[Any] = None
+        self, sql: str, parameters: Optional[Iterable[Any]] = None
     ) -> Iterable[sqlite3.Row]:
         """Helper to execute a query and return all the data."""
         if parameters is None:
@@ -266,7 +264,7 @@ class Connection(Thread):
         return self._conn.in_transaction
 
     @property
-    def isolation_level(self) -> IsolationLevel:
+    def isolation_level(self) -> Optional[str]:
         return self._conn.isolation_level
 
     @isolation_level.setter
