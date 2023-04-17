@@ -9,10 +9,7 @@ import sys
 import tempfile
 import time
 
-if sys.version_info < (3, 8):
-    from aiounittest import AsyncTestCase as TestCase
-else:
-    from unittest import IsolatedAsyncioTestCase as TestCase
+from unittest import IsolatedAsyncioTestCase as TestCase
 
 import aiosqlite
 from .smoke import setup_logger

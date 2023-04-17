@@ -26,10 +26,7 @@ from typing import (
 )
 from warnings import warn
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing import Literal
 
 from .context import contextmanager
 from .cursor import Cursor
@@ -235,30 +232,18 @@ class Connection(Thread):
         that query executions take place so instead of executing directly
         against the connection, we defer this to `run` function.
 
-        In Python 3.8 and above, if *deterministic* is true, the created
-        function is marked as deterministic, which allows SQLite to perform
-        additional optimizations. This flag is supported by SQLite 3.8.3 or
-        higher, ``NotSupportedError`` will be raised if used with older
-        versions.
+        If ``deterministic`` is true, the created function is marked as deterministic,
+        which allows SQLite to perform additional optimizations. This flag is supported
+        by SQLite 3.8.3 or higher, ``NotSupportedError`` will be raised if used with
+        older versions.
         """
-        if sys.version_info >= (3, 8):
-            await self._execute(
-                self._conn.create_function,
-                name,
-                num_params,
-                func,
-                deterministic=deterministic,
-            )
-        else:
-            if deterministic:
-                warnings.warn(
-                    "Deterministic function support is only available on "
-                    'Python 3.8+. Function "{}" will be registered as '
-                    "non-deterministic as per SQLite defaults.".format(name),
-                    stacklevel=2,
-                )
-
-            await self._execute(self._conn.create_function, name, num_params, func)
+        await self._execute(
+            self._conn.create_function,
+            name,
+            num_params,
+            func,
+            deterministic=deterministic,
+        )
 
     @property
     def in_transaction(self) -> bool:
