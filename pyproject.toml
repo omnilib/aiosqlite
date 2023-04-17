@@ -49,6 +49,13 @@ exclude = [
     ".github/",
 ]
 
+[tool.attribution]
+name = "aiosqlite"
+package = "aiosqlite"
+ignored_authors = ["dependabot"]
+signed_tags = true
+version_file = true
+
 [tool.coverage.run]
 branch = true
 include = ["aiosqlite/*"]
