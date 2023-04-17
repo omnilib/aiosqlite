@@ -5,7 +5,6 @@
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
 import string
-import sys
 import tempfile
 import time
 
