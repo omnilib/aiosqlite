@@ -455,7 +455,6 @@ class SmokeTest(TestCase):
                 rows = await cursor.fetchall()
                 self.assertEqual(rows, [(1, "hello"), (2, "world")])
 
-    @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
     async def test_backup_sqlite(self):
         async with aiosqlite.connect(":memory:") as db1:
             with sqlite3.connect(":memory:") as db2:
@@ -473,11 +472,3 @@ class SmokeTest(TestCase):
                 cursor = db2.execute("select * from foo")
                 rows = cursor.fetchall()
                 self.assertEqual(rows, [(1, "hello"), (2, "world")])
-
-    @skipUnless(sys.version_info < (3, 7), "Test short circuit fail on Py 3.6")
-    async def test_backup_py36(self):
-        async with aiosqlite.connect(":memory:") as db1, aiosqlite.connect(
-            ":memory:"
-        ) as db2:
-            with self.assertRaisesRegex(RuntimeError, "backup().+3.7"):
-                await db1.backup(db2)

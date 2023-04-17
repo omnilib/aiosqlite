@@ -362,9 +362,6 @@ class Connection(Thread):
 
         Takes either a standard sqlite3 or aiosqlite Connection object as the target.
         """
-        if sys.version_info < (3, 7):
-            raise RuntimeError("backup() method is only available on Python 3.7+")
-
         if isinstance(target, Connection):
             target = target._conn
 
