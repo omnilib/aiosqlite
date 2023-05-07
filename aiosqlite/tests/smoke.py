@@ -404,6 +404,14 @@ class SmokeTest(TestCase):
             except sqlite3.ProgrammingError:
                 pass
 
+    async def test_close_twice(self):
+        db = await aiosqlite.connect(TEST_DB)
+
+        await db.close()
+
+        # no error
+        await db.close()
+
     async def test_backup_aiosqlite(self):
         def progress(a, b, c):
             print(a, b, c)

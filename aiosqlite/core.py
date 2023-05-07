@@ -159,6 +159,10 @@ class Connection(Thread):
 
     async def close(self) -> None:
         """Complete queued queries/cursors and close the connection."""
+
+        if self._connection is None:
+            return
+
         try:
             await self._execute(self._conn.close)
         except Exception:
