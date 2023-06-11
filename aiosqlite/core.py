@@ -239,6 +239,20 @@ class Connection(Thread):
             func,
             deterministic=deterministic,
         )
+    async def create_aggregate(
+        self, name: str, num_params: int, aggregate_class: Callable) -> None:
+        """
+        Create user-defined aggregate function that can be later used
+        within SQL statements. Must be run within the same thread
+        that query executions take place so instead of executing directly
+        against the connection, we defer this to `run` function.
+        """
+        await self._execute(
+            self._conn.create_aggregate,
+            name,
+            num_params,
+            aggregate_class,
+        )
 
     @property
     def in_transaction(self) -> bool:
