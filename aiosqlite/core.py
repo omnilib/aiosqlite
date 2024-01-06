@@ -63,9 +63,7 @@ class Connection(Thread):
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
-        self._tx: SimpleQueue[
-            Optional[Tuple[asyncio.Future, Callable[[], None]]]
-        ] = SimpleQueue()
+        self._tx: SimpleQueue[Tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
 
         if loop is not None:
@@ -76,7 +74,8 @@ class Connection(Thread):
 
     def _stop_running(self):
         self._running = False
-        self._tx.put_nowait(_STOP_RUNNING_SENTINEL)
+        # PEP 661 is not accepted yet, so we cannot type a sentinel
+        self._tx.put_nowait(_STOP_RUNNING_SENTINEL)  # type: ignore[arg-type]
 
     @property
     def _conn(self) -> sqlite3.Connection:
