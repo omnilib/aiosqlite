@@ -12,8 +12,18 @@ from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
 from threading import Thread
-from typing import (Any, AsyncIterator, Callable, Generator, Iterable, Literal,
-                    Optional, Tuple, Type, Union)
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Generator,
+    Iterable,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 from warnings import warn
 
 from .context import contextmanager
