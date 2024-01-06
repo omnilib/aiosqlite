@@ -12,7 +12,7 @@ import sys
 import warnings
 from functools import partial
 from pathlib import Path
-from queue import Empty, Queue
+from queue import Empty, Queue, SimpleQueue
 from threading import Thread
 from typing import (
     Any,
@@ -21,6 +21,7 @@ from typing import (
     Generator,
     Iterable,
     Optional,
+    Tuple,
     Type,
     Union,
 )
@@ -42,11 +43,19 @@ LOG = logging.getLogger("aiosqlite")
 IsolationLevel = Optional[Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]]
 
 
-def get_loop(future: asyncio.Future) -> asyncio.AbstractEventLoop:
-    if sys.version_info >= (3, 7):
-        return future.get_loop()
-    else:
-        return future._loop
+def set_result(fut: asyncio.Future, result: Any) -> None:
+    """Set the result of a future if it hasn't been set already."""
+    if not fut.done():
+        fut.set_result(result)
+
+
+def set_exception(fut: asyncio.Future, e: BaseException) -> None:
+    """Set the exception of a future if it hasn't been set already."""
+    if not fut.done():
+        fut.set_exception(e)
+
+
+_STOP_RUNNING_SENTINEL = object()
 
 
 class Connection(Thread):
@@ -60,7 +69,9 @@ class Connection(Thread):
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
-        self._tx: Queue = Queue()
+        self._tx: SimpleQueue[
+            Optional[Tuple[asyncio.Future, Callable[[], None]]]
+        ] = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
 
         if loop is not None:
@@ -71,7 +82,7 @@ class Connection(Thread):
 
     def _stop_running(self):
         self._running = False
-        self._tx.put_nowait(None)
+        self._tx.put_nowait(_STOP_RUNNING_SENTINEL)
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -105,7 +116,7 @@ class Connection(Thread):
             # futures)
 
             tx_item = self._tx.get()
-            if tx_item == None:
+            if tx_item is _STOP_RUNNING_SENTINEL:
                 break
 
             future, function = tx_item
@@ -114,20 +125,10 @@ class Connection(Thread):
                 LOG.debug("executing %s", function)
                 result = function()
                 LOG.debug("operation %s completed", function)
-
-                def set_result(fut, result):
-                    if not fut.done():
-                        fut.set_result(result)
-
-                get_loop(future).call_soon_threadsafe(set_result, future, result)
+                future.get_loop().call_soon_threadsafe(set_result, future, result)
             except BaseException as e:
                 LOG.debug("returning exception %s", e)
-
-                def set_exception(fut, e):
-                    if not fut.done():
-                        fut.set_exception(e)
-
-                get_loop(future).call_soon_threadsafe(set_exception, future, e)
+                future.get_loop().call_soon_threadsafe(set_exception, future, e)
 
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
