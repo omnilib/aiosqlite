@@ -2,16 +2,10 @@
 # Licensed under the MIT license
 import asyncio
 import sqlite3
-import sys
 from pathlib import Path
 from sqlite3 import OperationalError
 from threading import Thread
-from unittest import skipIf, SkipTest, skipUnless
-
-if sys.version_info < (3, 8):
-    from aiounittest import AsyncTestCase as TestCase
-else:
-    from unittest import IsolatedAsyncioTestCase as TestCase
+from unittest import IsolatedAsyncioTestCase as TestCase, SkipTest
 
 import aiosqlite
 from .helpers import setup_logger
@@ -242,6 +236,17 @@ class SmokeTest(TestCase):
                 with self.assertRaises(TypeError):
                     _ = row["k"]
 
+            async with db.cursor() as cursor:
+                cursor.row_factory = aiosqlite.Row
+                self.assertEqual(cursor.row_factory, aiosqlite.Row)
+                await cursor.execute("select * from test_properties")
+                row = await cursor.fetchone()
+                self.assertIsInstance(row, aiosqlite.Row)
+                self.assertEqual(row[1], 1)
+                self.assertEqual(row[2], "hi")
+                self.assertEqual(row["k"], 1)
+                self.assertEqual(row["d"], "hi")
+
             db.row_factory = aiosqlite.Row
             db.text_factory = bytes
             self.assertEqual(db.row_factory, aiosqlite.Row)
@@ -317,29 +322,7 @@ class SmokeTest(TestCase):
                 row = await res.fetchone()
                 self.assertEqual(row[0], 20)
 
-    @skipUnless(sys.version_info < (3, 8), "Python < 3.8 specific behaviour")
-    async def test_create_function_deterministic_pre38(self):
-        """Make sure the deterministic parameter cannot be used in old Python versions"""
-
-        def one_arg(num):
-            return num * 2
-
-        async with aiosqlite.connect(TEST_DB) as db:
-            with self.assertWarnsRegex(UserWarning, "registered as non-deterministic"):
-                await db.create_function("one_arg", 1, one_arg, deterministic=True)
-
-            await db.execute("create table foo (id int, bar int)")
-
-            # Deterministic parameter is only available in Python 3.8+ so this
-            # won't be deterministic
-            with self.assertRaisesRegex(
-                OperationalError,
-                "non-deterministic functions prohibited in index expressions",
-            ):
-                await db.execute("create index t on foo(one_arg(bar))")
-
-    @skipIf(sys.version_info < (3, 8), "Python 3.8+ specific behaviour")
-    async def test_create_function_deterministic_post38(self):
+    async def test_create_function_deterministic(self):
         """Assert that after creating a deterministic custom function, it can be used.
 
         https://sqlite.org/deterministic.html
@@ -421,7 +404,14 @@ class SmokeTest(TestCase):
             except sqlite3.ProgrammingError:
                 pass
 
-    @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
+    async def test_close_twice(self):
+        db = await aiosqlite.connect(TEST_DB)
+
+        await db.close()
+
+        # no error
+        await db.close()
+
     async def test_backup_aiosqlite(self):
         def progress(a, b, c):
             print(a, b, c)
@@ -444,7 +434,6 @@ class SmokeTest(TestCase):
                 rows = await cursor.fetchall()
                 self.assertEqual(rows, [(1, "hello"), (2, "world")])
 
-    @skipIf(sys.version_info < (3, 7), "Test backup() on 3.7+")
     async def test_backup_sqlite(self):
         async with aiosqlite.connect(":memory:") as db1:
             with sqlite3.connect(":memory:") as db2:
@@ -462,11 +451,3 @@ class SmokeTest(TestCase):
                 cursor = db2.execute("select * from foo")
                 rows = cursor.fetchall()
                 self.assertEqual(rows, [(1, "hello"), (2, "world")])
-
-    @skipUnless(sys.version_info < (3, 7), "Test short circuit fail on Py 3.6")
-    async def test_backup_py36(self):
-        async with aiosqlite.connect(":memory:") as db1, aiosqlite.connect(
-            ":memory:"
-        ) as db2:
-            with self.assertRaisesRegex(RuntimeError, "backup().+3.7"):
-                await db1.backup(db2)

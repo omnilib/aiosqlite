@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         os: [macOS-latest, ubuntu-latest, windows-latest]
 
     steps:
@@ -22,12 +22,12 @@ jobs:
       - name: Set Up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: pyproject.toml
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          make setup
-          pip install -U .
+          pip install -U .[dev]
       - name: Test
         run: make test
       - name: Lint

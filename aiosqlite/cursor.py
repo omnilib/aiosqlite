@@ -2,7 +2,16 @@
 # Licensed under the MIT license
 
 import sqlite3
-from typing import Any, AsyncIterator, Iterable, Optional, Tuple, TYPE_CHECKING
+from typing import (
+    Any,
+    AsyncIterator,
+    Callable,
+    Iterable,
+    Optional,
+    Tuple,
+    Type,
+    TYPE_CHECKING,
+)
 
 if TYPE_CHECKING:
     from .core import Connection
@@ -30,7 +39,9 @@ class Cursor:
         """Execute the given function on the shared connection's thread."""
         return await self._conn._execute(fn, *args, **kwargs)
 
-    async def execute(self, sql: str, parameters: Iterable[Any] = None) -> "Cursor":
+    async def execute(
+        self, sql: str, parameters: Optional[Iterable[Any]] = None
+    ) -> "Cursor":
         """Execute the given query."""
         if parameters is None:
             parameters = []
@@ -53,7 +64,7 @@ class Cursor:
         """Fetch a single row."""
         return await self._execute(self._cursor.fetchone)
 
-    async def fetchmany(self, size: int = None) -> Iterable[sqlite3.Row]:
+    async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
         args: Tuple[int, ...] = ()
         if size is not None:
@@ -73,7 +84,7 @@ class Cursor:
         return self._cursor.rowcount
 
     @property
-    def lastrowid(self) -> int:
+    def lastrowid(self) -> Optional[int]:
         return self._cursor.lastrowid
 
     @property
@@ -85,8 +96,16 @@ class Cursor:
         self._cursor.arraysize = value
 
     @property
-    def description(self) -> Tuple[Tuple]:
+    def description(self) -> Tuple[Tuple[str, None, None, None, None, None, None], ...]:
         return self._cursor.description
+
+    @property
+    def row_factory(self) -> Optional[Callable[[sqlite3.Cursor, sqlite3.Row], object]]:
+        return self._cursor.row_factory
+
+    @row_factory.setter
+    def row_factory(self, factory: Optional[Type]) -> None:
+        self._cursor.row_factory = factory
 
     @property
     def connection(self) -> sqlite3.Connection:

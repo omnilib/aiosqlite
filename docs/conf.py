@@ -51,7 +51,7 @@ autodoc_default_options = {
 autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
 
-highlight_language = "python3"
+highlight_language = "text"
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 master_doc = "index"
 
