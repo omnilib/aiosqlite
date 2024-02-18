@@ -31,7 +31,7 @@ dev = [
     "flake8-bugbear==23.3.23",
     "flit==3.8.0",
     "mypy==1.2.0",
-    "ufmt==2.1.0",
+    "ufmt==2.3.0",
     "usort==1.0.7",
 ]
 docs = [
