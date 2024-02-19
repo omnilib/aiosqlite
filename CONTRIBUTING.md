@@ -6,8 +6,8 @@ You'll need to have at least Python 3.8 available for testing.
 
 You can do this with [pyenv][]:
 
-    $ pyenv install 3.8.17
-    $ pyenv local 3.8.17
+    $ pyenv install <version>
+    $ pyenv local <version>
     
     
 ## Setup
@@ -22,9 +22,9 @@ install the appropriate tools and dependencies:
 
 ## Formatting
 
-aiosqlite uses *[black][]* and [µsort][] for formatting code
-and imports, respectively. If your editor does not already
-support this workflow, you can manually format files:
+aiosqlite uses *[ufmt][]* for formatting code and imports.
+If your editor does not already support this workflow,
+you can manually format files:
 
     $ make format
 
@@ -49,6 +49,5 @@ that you have done the following:
 * Formatted code following project standards
 * Validated code and formatting with `make test lint`
 
-[black]: https://github.com/psf/black
-[µsort]: https://github.com/facebook/usort
 [pyenv]: https://github.com/pyenv/pyenv
+[µfmt]: https://ufmt.omnilib.dev
