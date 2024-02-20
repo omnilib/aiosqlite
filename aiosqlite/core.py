@@ -115,7 +115,7 @@ class Connection(Thread):
                 result = function()
                 LOG.debug("operation %s completed", function)
                 future.get_loop().call_soon_threadsafe(set_result, future, result)
-            except BaseException as e:
+            except BaseException as e:  # noqa B036
                 LOG.debug("returning exception %s", e)
                 future.get_loop().call_soon_threadsafe(set_exception, future, e)
 

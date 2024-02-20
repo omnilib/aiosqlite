@@ -357,8 +357,7 @@ class SmokeTest(TestCase):
                 self.assertIsNone(db)  # should never be reached
 
         with self.assertRaisesRegex(OperationalError, "unable to open database"):
-            db = await aiosqlite.connect(bad_db)
-            self.assertIsNone(db)  # should never be reached
+            await aiosqlite.connect(bad_db)
 
     async def test_iterdump(self):
         async with aiosqlite.connect(":memory:") as db:

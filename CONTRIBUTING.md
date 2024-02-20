@@ -2,13 +2,12 @@
 
 ## Preparation
 
-You'll need to have at least Python 3.5 available for testing.
-Python 3.6 or newer is recommended in order to validate formatting.
+You'll need to have at least Python 3.8 available for testing.
 
 You can do this with [pyenv][]:
 
-    $ pyenv install 3.6.10
-    $ pyenv local 3.6.10
+    $ pyenv install <version>
+    $ pyenv local <version>
     
     
 ## Setup
@@ -23,9 +22,9 @@ install the appropriate tools and dependencies:
 
 ## Formatting
 
-aiosqlite uses *[black][]* and [isort][] for formatting code
-and imports, respectively. If your editor does not already
-support this workflow, you can manually format files:
+aiosqlite uses *[ufmt][]* for formatting code and imports.
+If your editor does not already support this workflow,
+you can manually format files:
 
     $ make format
 
@@ -50,6 +49,5 @@ that you have done the following:
 * Formatted code following project standards
 * Validated code and formatting with `make test lint`
 
-[black]: https://github.com/psf/black
-[isort]: https://timothycrosley.github.io/isort/
 [pyenv]: https://github.com/pyenv/pyenv
+[µfmt]: https://ufmt.omnilib.dev
