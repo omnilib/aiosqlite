@@ -108,8 +108,8 @@ class Cursor:
         self._cursor.row_factory = factory
 
     @property
-    def connection(self) -> sqlite3.Connection:
-        return self._cursor.connection
+    def connection(self) -> "Connection":
+        return self._conn
 
     async def __aenter__(self):
         return self
