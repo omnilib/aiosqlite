@@ -62,10 +62,15 @@ class Connection(Thread):
                 DeprecationWarning,
             )
 
-    def _stop_running(self):
+    async def _stop_running(self):
         self._running = False
-        # PEP 661 is not accepted yet, so we cannot type a sentinel
-        self._tx.put_nowait(_STOP_RUNNING_SENTINEL)  # type: ignore[arg-type]
+
+        function = partial(lambda: _STOP_RUNNING_SENTINEL)
+        future = asyncio.get_event_loop().create_future()
+
+        self._tx.put_nowait((future, function))
+
+        return await future
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -95,9 +100,6 @@ class Connection(Thread):
             # futures)
 
             tx_item = self._tx.get()
-            if tx_item is _STOP_RUNNING_SENTINEL:
-                break
-
             future, function = tx_item
 
             try:
@@ -105,6 +107,9 @@ class Connection(Thread):
                 result = function()
                 LOG.debug("operation %s completed", function)
                 future.get_loop().call_soon_threadsafe(set_result, future, result)
+
+                if result is _STOP_RUNNING_SENTINEL:
+                    break
             except BaseException as e:  # noqa B036
                 LOG.debug("returning exception %s", e)
                 future.get_loop().call_soon_threadsafe(set_exception, future, e)
@@ -129,7 +134,7 @@ class Connection(Thread):
                 self._tx.put_nowait((future, self._connector))
                 self._connection = await future
             except BaseException:
-                self._stop_running()
+                await self._stop_running()
                 self._connection = None
                 raise
 
@@ -170,7 +175,7 @@ class Connection(Thread):
             LOG.info("exception occurred while closing connection")
             raise
         finally:
-            self._stop_running()
+            await self._stop_running()
             self._connection = None
 
     @contextmanager
