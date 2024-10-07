@@ -4,9 +4,9 @@ import asyncio
 import sqlite3
 from pathlib import Path
 from sqlite3 import OperationalError
-from threading import Thread
-from unittest import IsolatedAsyncioTestCase as TestCase, SkipTest
 from tempfile import TemporaryDirectory
+from threading import Thread
+from unittest import IsolatedAsyncioTestCase, SkipTest
 
 import aiosqlite
 from .helpers import setup_logger
@@ -18,7 +18,7 @@ except ImportError:
     default_text_factory = str
 
 
-class SmokeTest(TestCase):
+class SmokeTest(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         setup_logger()
