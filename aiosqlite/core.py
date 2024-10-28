@@ -58,8 +58,9 @@ class Connection(Thread):
         connector: Callable[[], sqlite3.Connection],
         iter_chunk_size: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
+        daemonic: bool = False,
     ) -> None:
-        super().__init__()
+        super().__init__(daemon=daemonic)
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
@@ -371,6 +372,7 @@ def connect(
     *,
     iter_chunk_size=64,
     loop: Optional[asyncio.AbstractEventLoop] = None,
+    daemonic: bool = False,
     **kwargs: Any,
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
@@ -391,4 +393,4 @@ def connect(
 
         return sqlite3.connect(loc, **kwargs)
 
-    return Connection(connector, iter_chunk_size)
+    return Connection(connector, iter_chunk_size, daemonic)
