@@ -252,6 +252,10 @@ class Connection(Thread):
         )
 
     @property
+    def autocommit(self) -> int:
+        return self._conn.autocommit
+
+    @property
     def in_transaction(self) -> bool:
         return self._conn.in_transaction
 
