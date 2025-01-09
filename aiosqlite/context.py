@@ -2,8 +2,9 @@
 # Licensed under the MIT license
 
 
+from collections.abc import Coroutine, Generator
 from functools import wraps
-from typing import Any, AsyncContextManager, Callable, Coroutine, Generator, TypeVar
+from typing import Any, AsyncContextManager, Callable, TypeVar
 
 from .cursor import Cursor
 

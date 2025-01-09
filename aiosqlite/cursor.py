@@ -2,14 +2,11 @@
 # Licensed under the MIT license
 
 import sqlite3
+from collections.abc import AsyncIterator, Iterable
 from typing import (
     Any,
-    AsyncIterator,
     Callable,
-    Iterable,
     Optional,
-    Tuple,
-    Type,
     TYPE_CHECKING,
 )
 
@@ -66,7 +63,7 @@ class Cursor:
 
     async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
-        args: Tuple[int, ...] = ()
+        args: tuple[int, ...] = ()
         if size is not None:
             args = (size,)
         return await self._execute(self._cursor.fetchmany, *args)
@@ -96,7 +93,7 @@ class Cursor:
         self._cursor.arraysize = value
 
     @property
-    def description(self) -> Tuple[Tuple[str, None, None, None, None, None, None], ...]:
+    def description(self) -> tuple[tuple[str, None, None, None, None, None, None], ...]:
         return self._cursor.description
 
     @property
@@ -104,7 +101,7 @@ class Cursor:
         return self._cursor.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: Optional[Type]) -> None:
+    def row_factory(self, factory: Optional[type]) -> None:
         self._cursor.row_factory = factory
 
     @property
