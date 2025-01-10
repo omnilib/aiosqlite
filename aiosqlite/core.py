@@ -13,13 +13,7 @@ from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
 from threading import Thread
-from typing import (
-    Any,
-    Callable,
-    Literal,
-    Optional,
-    Union,
-)
+from typing import Any, Callable, Literal, Optional, Union
 from warnings import warn
 
 from .context import contextmanager

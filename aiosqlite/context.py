@@ -3,15 +3,16 @@
 
 
 from collections.abc import Coroutine, Generator
+from contextlib import AbstractAsyncContextManager
 from functools import wraps
-from typing import Any, AsyncContextManager, Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from .cursor import Cursor
 
 _T = TypeVar("_T")
 
 
-class Result(AsyncContextManager[_T], Coroutine[Any, Any, _T]):
+class Result(AbstractAsyncContextManager[_T], Coroutine[Any, Any, _T]):
     __slots__ = ("_coro", "_obj")
 
     def __init__(self, coro: Coroutine[Any, Any, _T]):

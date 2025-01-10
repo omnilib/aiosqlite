@@ -3,12 +3,7 @@
 
 import sqlite3
 from collections.abc import AsyncIterator, Iterable
-from typing import (
-    Any,
-    Callable,
-    Optional,
-    TYPE_CHECKING,
-)
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .core import Connection
