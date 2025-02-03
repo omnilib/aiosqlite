@@ -8,22 +8,12 @@ Core implementation of aiosqlite proxies
 import asyncio
 import logging
 import sqlite3
+from collections.abc import AsyncIterator, Generator, Iterable
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
 from threading import Thread
-from typing import (
-    Any,
-    AsyncIterator,
-    Callable,
-    Generator,
-    Iterable,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Literal, Optional, Union
 from warnings import warn
 
 from .context import contextmanager
@@ -63,7 +53,7 @@ class Connection(Thread):
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
-        self._tx: SimpleQueue[Tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
+        self._tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
 
         if loop is not None:
@@ -264,11 +254,11 @@ class Connection(Thread):
         self._conn.isolation_level = value
 
     @property
-    def row_factory(self) -> Optional[Type]:
+    def row_factory(self) -> Optional[type]:
         return self._conn.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: Optional[Type]) -> None:
+    def row_factory(self, factory: Optional[type]) -> None:
         self._conn.row_factory = factory
 
     @property

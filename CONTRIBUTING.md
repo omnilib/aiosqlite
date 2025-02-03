@@ -2,7 +2,7 @@
 
 ## Preparation
 
-You'll need to have at least Python 3.8 available for testing.
+You'll need to have at least Python 3.9 available for testing.
 
 You can do this with [pyenv][]:
 
