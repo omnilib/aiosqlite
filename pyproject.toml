@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=2,<4"]
+requires = ["flit_core >=3.8,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -8,7 +8,7 @@ readme = "README.rst"
 license = {file="LICENSE"}
 dynamic = ["version", "description"]
 authors = [
-    {name="Amethyst Reese", email="amy@n7.gg"},
+    {name="Amethyst Reese", email="amethyst@n7.gg"},
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -17,7 +17,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Software Development :: Libraries",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "typing_extensions >= 4.0",
 ]
@@ -26,6 +26,7 @@ dependencies = [
 dev = [
     "attribution==1.7.1",
     "black==24.3.0",
+    "build>=1.2",
     "coverage[toml]==7.4.4",
     "flake8==7.0.0",
     "flake8-bugbear==24.2.6",
@@ -36,7 +37,7 @@ dev = [
 ]
 docs = [
     "sphinx==7.2.6",
-    "sphinx-mdinclude==0.5.3",
+    "sphinx-mdinclude==0.6.1",
 ]
 
 [project.urls]

@@ -415,9 +415,10 @@ class SmokeTest(TestCase):
         def progress(a, b, c):
             print(a, b, c)
 
-        async with aiosqlite.connect(":memory:") as db1, aiosqlite.connect(
-            ":memory:"
-        ) as db2:
+        async with (
+            aiosqlite.connect(":memory:") as db1,
+            aiosqlite.connect(":memory:") as db2,
+        ):
             await db1.execute("create table foo (i integer, k charvar(250))")
             await db1.executemany(
                 "insert into foo values (?, ?)", [(1, "hello"), (2, "world")]

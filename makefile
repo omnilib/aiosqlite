@@ -1,31 +1,39 @@
-.venv:
-	python -m venv .venv
-	source .venv/bin/activate && make install
-	echo 'run `source .venv/bin/activate` to develop aiosqlite'
+PKG:=aiosqlite
+EXTRAS:=dev,docs
 
-venv: .venv
+UV:=$(shell uv --version)
+ifdef UV
+	VENV:=uv venv
+	PIP:=uv pip
+else
+	VENV:=python -m venv
+	PIP:=python -m pip
+endif
 
 install:
-	python -m pip install -U pip
-	python -m pip install -Ue .[dev,docs]
+	$(PIP) install -Ue .[$(EXTRAS)]
 
-release: lint test clean
-	flit publish
+.venv:
+	$(VENV) .venv
 
-format:
-	python -m ufmt format aiosqlite
-
-lint:
-	python -m flake8 aiosqlite
-	python -m ufmt check aiosqlite
+venv: .venv
+	source .venv/bin/activate && make install
+	echo 'run `source .venv/bin/activate` to activate virtualenv'
 
 test:
-	python -m coverage run -m aiosqlite.tests
+	python -m coverage run -m $(PKG).tests
 	python -m coverage report
-	python -m mypy -p aiosqlite
+	python -m mypy -p $(PKG)
+
+lint:
+	python -m flake8 $(PKG)
+	python -m ufmt check $(PKG)
+
+format:
+	python -m ufmt format $(PKG)
 
 perf:
-	python -m unittest -v aiosqlite.tests.perf
+	python -m unittest -v $(PKG).tests.perf
 
 .PHONY: html
 html: .venv README.rst docs/*.rst docs/conf.py
