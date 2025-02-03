@@ -7,6 +7,7 @@ from sqlite3 import OperationalError
 from tempfile import TemporaryDirectory
 from threading import Thread
 from unittest import IsolatedAsyncioTestCase, SkipTest
+from unittest.mock import patch
 
 import aiosqlite
 from .helpers import setup_logger
@@ -350,6 +351,23 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(OperationalError, "unable to open database"):
             await aiosqlite.connect(bad_db)
+
+    async def test_connect_base_exception(self):
+        # Check if connect task is cancelled, thread is properly closed.
+        def _raise_cancelled_error(*_, **__):
+            raise asyncio.CancelledError("I changed my mind")
+
+        connection = aiosqlite.Connection(lambda: sqlite3.connect(":memory:"), 64)
+        with (
+            patch.object(sqlite3, "connect", side_effect=_raise_cancelled_error),
+            self.assertRaisesRegex(asyncio.CancelledError, "I changed my mind"),
+        ):
+            async with connection:
+                ...
+        # Terminate the thread here if the test fails to have a clear error.
+        if connection._running:
+            connection._stop_running()
+            raise AssertionError("connection thread was not stopped")
 
     async def test_iterdump(self):
         async with aiosqlite.connect(":memory:") as db:

@@ -138,7 +138,7 @@ class Connection(Thread):
                 future = asyncio.get_event_loop().create_future()
                 self._tx.put_nowait((future, self._connector))
                 self._connection = await future
-            except Exception:
+            except BaseException:
                 self._stop_running()
                 self._connection = None
                 raise
