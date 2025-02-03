@@ -11,12 +11,6 @@ from unittest import IsolatedAsyncioTestCase, SkipTest
 import aiosqlite
 from .helpers import setup_logger
 
-# pypy uses non-standard text factory for low-level sqlite implementation
-try:
-    from _sqlite3 import _unicode_text_factory as default_text_factory
-except ImportError:
-    default_text_factory = str
-
 
 class SmokeTest(IsolatedAsyncioTestCase):
     @classmethod
@@ -224,7 +218,7 @@ class SmokeTest(IsolatedAsyncioTestCase):
             self.assertEqual(db.total_changes, 1)
 
             self.assertIsNone(db.row_factory)
-            self.assertEqual(db.text_factory, default_text_factory)
+            self.assertEqual(db.text_factory, str)
 
             async with db.cursor() as cursor:
                 await cursor.execute("select * from test_properties")
