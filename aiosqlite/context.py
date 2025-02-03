@@ -1,4 +1,4 @@
-# Copyright 2018
+# Copyright Amethyst Reese
 # Licensed under the MIT license
 
 
