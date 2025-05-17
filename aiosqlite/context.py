@@ -47,7 +47,7 @@ class Result(AbstractAsyncContextManager[_T], Coroutine[Any, Any, _T]):
 
 
 def contextmanager(
-    method: Callable[..., Coroutine[Any, Any, _T]]
+    method: Callable[..., Coroutine[Any, Any, _T]],
 ) -> Callable[..., Result[_T]]:
     @wraps(method)
     def wrapper(self, *args, **kwargs) -> Result[_T]:
