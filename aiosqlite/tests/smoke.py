@@ -414,6 +414,17 @@ class SmokeTest(IsolatedAsyncioTestCase):
             except sqlite3.ProgrammingError:
                 pass
 
+    async def test_close_blocking_until_transaction_queue_empty(self):
+        db = await aiosqlite.connect(self.db)
+        # Insert transactions into the
+        # transaction queue '_tx'
+        for i in range(1000):
+            await db.execute(f"select 1, {i}")
+        # Wait for all transactions to complete
+        await db.close()
+        # Check no more transaction pending
+        self.assertEqual(db._tx.empty(), True)
+
     async def test_close_twice(self):
         db = await aiosqlite.connect(self.db)
 
