@@ -1,16 +1,17 @@
 # Copyright Amethyst Reese
 # Licensed under the MIT license
+from __future__ import annotations
 
 import sqlite3
 from collections.abc import AsyncIterator, Iterable
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .core import Connection
 
 
 class Cursor:
-    def __init__(self, conn: "Connection", cursor: sqlite3.Cursor) -> None:
+    def __init__(self, conn: Connection, cursor: sqlite3.Cursor) -> None:
         self.iter_chunk_size = conn._iter_chunk_size
         self._conn = conn
         self._cursor = cursor
@@ -32,8 +33,8 @@ class Cursor:
         return await self._conn._execute(fn, *args, **kwargs)
 
     async def execute(
-        self, sql: str, parameters: Optional[Iterable[Any]] = None
-    ) -> "Cursor":
+        self, sql: str, parameters: Iterable[Any] | None = None
+    ) -> Cursor:
         """Execute the given query."""
         if parameters is None:
             parameters = []
@@ -42,21 +43,21 @@ class Cursor:
 
     async def executemany(
         self, sql: str, parameters: Iterable[Iterable[Any]]
-    ) -> "Cursor":
+    ) -> Cursor:
         """Execute the given multiquery."""
         await self._execute(self._cursor.executemany, sql, parameters)
         return self
 
-    async def executescript(self, sql_script: str) -> "Cursor":
+    async def executescript(self, sql_script: str) -> Cursor:
         """Execute a user script."""
         await self._execute(self._cursor.executescript, sql_script)
         return self
 
-    async def fetchone(self) -> Optional[sqlite3.Row]:
+    async def fetchone(self) -> sqlite3.Row | None:
         """Fetch a single row."""
         return await self._execute(self._cursor.fetchone)
 
-    async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
+    async def fetchmany(self, size: int | None = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
         args: tuple[int, ...] = ()
         if size is not None:
@@ -76,7 +77,7 @@ class Cursor:
         return self._cursor.rowcount
 
     @property
-    def lastrowid(self) -> Optional[int]:
+    def lastrowid(self) -> int | None:
         return self._cursor.lastrowid
 
     @property
@@ -92,11 +93,11 @@ class Cursor:
         return self._cursor.description
 
     @property
-    def row_factory(self) -> Optional[Callable[[sqlite3.Cursor, sqlite3.Row], object]]:
+    def row_factory(self) -> Callable[[sqlite3.Cursor, sqlite3.Row], object] | None:
         return self._cursor.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: Optional[type]) -> None:
+    def row_factory(self, factory: type | None) -> None:
         self._cursor.row_factory = factory
 
     @property

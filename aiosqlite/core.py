@@ -4,6 +4,7 @@
 """
 Core implementation of aiosqlite proxies
 """
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -13,7 +14,7 @@ from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
 from threading import Thread
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional
 from warnings import warn
 
 from .context import contextmanager
@@ -47,11 +48,11 @@ class Connection(Thread):
         self,
         connector: Callable[[], sqlite3.Connection],
         iter_chunk_size: int,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
+        loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         super().__init__()
         self._running = True
-        self._connection: Optional[sqlite3.Connection] = None
+        self._connection: sqlite3.Connection | None = None
         self._connector = connector
         self._tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
@@ -74,7 +75,7 @@ class Connection(Thread):
 
         return self._connection
 
-    def _execute_insert(self, sql: str, parameters: Any) -> Optional[sqlite3.Row]:
+    def _execute_insert(self, sql: str, parameters: Any) -> sqlite3.Row | None:
         cursor = self._conn.execute(sql, parameters)
         cursor.execute("SELECT last_insert_rowid()")
         return cursor.fetchone()
@@ -121,7 +122,7 @@ class Connection(Thread):
 
         return await future
 
-    async def _connect(self) -> "Connection":
+    async def _connect(self) -> Connection:
         """Connect to the actual sqlite database."""
         if self._connection is None:
             try:
@@ -135,11 +136,11 @@ class Connection(Thread):
 
         return self
 
-    def __await__(self) -> Generator[Any, None, "Connection"]:
+    def __await__(self) -> Generator[Any, None, Connection]:
         self.start()
         return self._connect().__await__()
 
-    async def __aenter__(self) -> "Connection":
+    async def __aenter__(self) -> Connection:
         return await self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -175,7 +176,7 @@ class Connection(Thread):
 
     @contextmanager
     async def execute(
-        self, sql: str, parameters: Optional[Iterable[Any]] = None
+        self, sql: str, parameters: Iterable[Any] | None = None
     ) -> Cursor:
         """Helper to create a cursor and execute the given query."""
         if parameters is None:
@@ -185,8 +186,8 @@ class Connection(Thread):
 
     @contextmanager
     async def execute_insert(
-        self, sql: str, parameters: Optional[Iterable[Any]] = None
-    ) -> Optional[sqlite3.Row]:
+        self, sql: str, parameters: Iterable[Any] | None = None
+    ) -> sqlite3.Row | None:
         """Helper to insert and get the last_insert_rowid."""
         if parameters is None:
             parameters = []
@@ -194,7 +195,7 @@ class Connection(Thread):
 
     @contextmanager
     async def execute_fetchall(
-        self, sql: str, parameters: Optional[Iterable[Any]] = None
+        self, sql: str, parameters: Iterable[Any] | None = None
     ) -> Iterable[sqlite3.Row]:
         """Helper to execute a query and return all the data."""
         if parameters is None:
@@ -246,7 +247,7 @@ class Connection(Thread):
         return self._conn.in_transaction
 
     @property
-    def isolation_level(self) -> Optional[str]:
+    def isolation_level(self) -> str | None:
         return self._conn.isolation_level
 
     @isolation_level.setter
@@ -254,11 +255,11 @@ class Connection(Thread):
         self._conn.isolation_level = value
 
     @property
-    def row_factory(self) -> Optional[type]:
+    def row_factory(self) -> type | None:
         return self._conn.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: Optional[type]) -> None:
+    def row_factory(self, factory: type | None) -> None:
         self._conn.row_factory = factory
 
     @property
@@ -280,7 +281,7 @@ class Connection(Thread):
         await self._execute(self._conn.load_extension, path)  # type: ignore
 
     async def set_progress_handler(
-        self, handler: Callable[[], Optional[int]], n: int
+        self, handler: Callable[[], int | None], n: int
     ) -> None:
         await self._execute(self._conn.set_progress_handler, handler, n)
 
@@ -315,7 +316,7 @@ class Connection(Thread):
 
         while True:
             try:
-                line: Optional[str] = dump_queue.get_nowait()
+                line: str | None = dump_queue.get_nowait()
                 if line is None:
                     break
                 yield line
@@ -331,10 +332,10 @@ class Connection(Thread):
 
     async def backup(
         self,
-        target: Union["Connection", sqlite3.Connection],
+        target: Connection | sqlite3.Connection,
         *,
         pages: int = 0,
-        progress: Optional[Callable[[int, int, int], None]] = None,
+        progress: Callable[[int, int, int], None] | None = None,
         name: str = "main",
         sleep: float = 0.250,
     ) -> None:
@@ -357,10 +358,10 @@ class Connection(Thread):
 
 
 def connect(
-    database: Union[str, Path],
+    database: str | Path,
     *,
     iter_chunk_size=64,
-    loop: Optional[asyncio.AbstractEventLoop] = None,
+    loop: asyncio.AbstractEventLoop | None = None,
     **kwargs: Any,
 ) -> Connection:
     """Create and return a connection proxy to the sqlite database."""
