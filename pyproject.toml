@@ -19,19 +19,16 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "typing_extensions >= 4.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "attribution==1.8.0",
-    "black==25.1.0",
     "build>=1.2",
     "coverage[toml]==7.8.0",
-    "flake8==7.2.0",
-    "flake8-bugbear==24.12.12",
     "flit==3.12.0",
-    "mypy==1.15.0",
+    "ruff==0.11.12",
+    "mypy==1.16.0",
     "ufmt==2.8.0",
     "usort==1.0.8.post1",
 ]
@@ -66,6 +63,14 @@ fail_under = 75
 precision = 1
 show_missing = true
 skip_covered = true
+
+[tool.ruff.lint]
+extend-select = [
+    "B",      # https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+]
+
+[tool.ruff.lint.per-file-ignores]
+"aiosqlite/tests/__init__.py" = ["F401"]
 
 [tool.mypy]
 ignore_missing_imports = true

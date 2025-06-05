@@ -60,6 +60,7 @@ class Connection(Thread):
             warn(
                 "aiosqlite.Connection no longer uses the `loop` parameter",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
     def _stop_running(self):
@@ -369,6 +370,7 @@ def connect(
         warn(
             "aiosqlite.connect() no longer uses the `loop` parameter",
             DeprecationWarning,
+            stacklevel=2,
         )
 
     def connector() -> sqlite3.Connection:
