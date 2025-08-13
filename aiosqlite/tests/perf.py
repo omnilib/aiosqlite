@@ -4,6 +4,7 @@
 """
 Simple perf tests for aiosqlite and the asyncio run loop.
 """
+import sqlite3
 import string
 import tempfile
 import time
@@ -117,6 +118,23 @@ class PerfTest(TestCase):
     async def test_inserts(self):
         async with aiosqlite.connect(TEST_DB) as db:
             await db.execute("create table perf (i integer primary key asc, k integer)")
+            await db.commit()
+
+            while True:
+                yield
+                await db.execute("insert into perf (k) values (1), (2), (3)")
+                await db.commit()
+
+    @timed
+    async def test_inserts_authorized(self):
+        def deny_drops(action_code, arg1, arg2, db_name, trigger_name):
+            if action_code == sqlite3.SQLITE_DROP_TABLE:
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        async with aiosqlite.connect(TEST_DB) as db:
+            await db.execute("create table perf (i integer primary key asc, k integer)")
+            await db.set_authorizer(deny_drops)
             await db.commit()
 
             while True:
