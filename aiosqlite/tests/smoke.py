@@ -344,6 +344,41 @@ class SmokeTest(IsolatedAsyncioTestCase):
             await db.execute("select 10")
             self.assertIn("select 10", statements)
 
+    async def test_set_authorizer_deny_drops(self):
+        """Test authorizer that denies DROP operations"""
+
+        def deny_drops(action_code, arg1, arg2, db_name, trigger_name):
+            if action_code == sqlite3.SQLITE_DROP_TABLE:
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        async with aiosqlite.connect(self.db) as db:
+            await db.set_authorizer(deny_drops)
+
+            # Other operations should succeed
+            await db.execute("CREATE TABLE test_drop (id INTEGER)")
+            await db.execute("INSERT INTO test_drop VALUES (1)")
+            await db.execute("SELECT * FROM test_drop")
+
+            # DROP should fail
+            with self.assertRaises(sqlite3.DatabaseError):
+                await db.execute("DROP TABLE test_drop")
+
+            # Disabling the authorizer re-enables DROP
+            await db.set_authorizer(None)
+            await db.execute("DROP TABLE test_drop")
+
+    async def test_set_authorizer_exception_propagation(self):
+        """Test that exceptions raised in authorizer callback are caught by SQLite"""
+
+        def raise_exception(action_code, arg1, arg2, db_name, trigger_name):
+            raise ValueError("Test exception from authorizer")
+
+        async with aiosqlite.connect(self.db) as db:
+            await db.set_authorizer(raise_exception)
+            with self.assertRaises(sqlite3.DatabaseError):
+                await db.execute("CREATE TABLE test_exception (id INTEGER)")
+
     async def test_connect_error(self):
         bad_db = Path("/something/that/shouldnt/exist.db")
         with self.assertRaisesRegex(OperationalError, "unable to open database"):
