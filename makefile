@@ -26,7 +26,7 @@ test:
 	python -m mypy -p $(PKG)
 
 lint:
-	python -m flake8 $(PKG)
+	python -m ruff check $(PKG)
 	python -m ufmt check $(PKG)
 
 format:
