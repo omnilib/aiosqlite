@@ -462,3 +462,11 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 cursor = db2.execute("select * from foo")
                 rows = cursor.fetchall()
                 self.assertEqual(rows, [(1, "hello"), (2, "world")])
+
+    async def test_emits_warning_when_left_open(self):
+        db = await aiosqlite.connect(":memory:")
+
+        with self.assertWarnsRegex(
+            ResourceWarning, r".*was deleted before being closed.*"
+        ):
+            del db
