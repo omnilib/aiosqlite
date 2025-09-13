@@ -62,13 +62,16 @@ def _connection_worker_thread(
         future, function = tx_item
 
         try:
-            LOG.debug("executing %s", function)
             result = function()
-            LOG.debug("operation %s completed", function)
-            future.get_loop().call_soon_threadsafe(set_result, future, result)
+            set_fn = set_result
         except BaseException as e:  # noqa B036
-            LOG.debug("returning exception %s", e)
-            future.get_loop().call_soon_threadsafe(set_exception, future, e)
+            result = e
+            set_fn = set_exception  # type: ignore[assignment]
+
+        try:
+            future.get_loop().call_soon_threadsafe(set_fn, future, result)
+        except BaseException as e:  # noqa B036
+            LOG.warning("could not send future result: %r", tx_item, exc_info=e)
 
 
 class Connection:
