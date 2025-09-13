@@ -371,13 +371,10 @@ class Connection:
             stacklevel=1,
         )
 
-        try:
-            asyncio.run_coroutine_threadsafe(self.close(), asyncio.get_event_loop())
-        except RuntimeError:
-            # The event loop has closed, so the connection can't be closed properly.
-            # We can still stop the worker thread so that the interpreter doesn't
-            # hang indefinitely on exit.
-            self._stop_running()
+        # Don't try to be creative here, the event loop may have already been closed.
+        # Simply stop the worker thread, and let the underlying sqlite3 connection
+        # be finalized by its own __del__.
+        self._stop_running()
 
 
 def connect(
