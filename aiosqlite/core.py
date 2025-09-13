@@ -42,19 +42,48 @@ def set_exception(fut: asyncio.Future, e: BaseException) -> None:
 _STOP_RUNNING_SENTINEL = object()
 
 
-class Connection(Thread):
+def _connection_worker_thread(
+    tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]],
+):
+    """
+    Execute function calls on a separate thread.
+
+    :meta private:
+    """
+    while True:
+        # Continues running until all queue items are processed,
+        # even after connection is closed (so we can finalize all
+        # futures)
+
+        tx_item = tx.get()
+        if tx_item is _STOP_RUNNING_SENTINEL:
+            break
+
+        future, function = tx_item
+
+        try:
+            LOG.debug("executing %s", function)
+            result = function()
+            LOG.debug("operation %s completed", function)
+            future.get_loop().call_soon_threadsafe(set_result, future, result)
+        except BaseException as e:  # noqa B036
+            LOG.debug("returning exception %s", e)
+            future.get_loop().call_soon_threadsafe(set_exception, future, e)
+
+
+class Connection:
     def __init__(
         self,
         connector: Callable[[], sqlite3.Connection],
         iter_chunk_size: int,
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
-        super().__init__()
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
         self._tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
+        self._thread = Thread(target=_connection_worker_thread, args=(self._tx,))
 
         if loop is not None:
             warn(
@@ -83,32 +112,6 @@ class Connection(Thread):
         cursor = self._conn.execute(sql, parameters)
         return cursor.fetchall()
 
-    def run(self) -> None:
-        """
-        Execute function calls on a separate thread.
-
-        :meta private:
-        """
-        while True:
-            # Continues running until all queue items are processed,
-            # even after connection is closed (so we can finalize all
-            # futures)
-
-            tx_item = self._tx.get()
-            if tx_item is _STOP_RUNNING_SENTINEL:
-                break
-
-            future, function = tx_item
-
-            try:
-                LOG.debug("executing %s", function)
-                result = function()
-                LOG.debug("operation %s completed", function)
-                future.get_loop().call_soon_threadsafe(set_result, future, result)
-            except BaseException as e:  # noqa B036
-                LOG.debug("returning exception %s", e)
-                future.get_loop().call_soon_threadsafe(set_exception, future, e)
-
     async def _execute(self, fn, *args, **kwargs):
         """Queue a function with the given arguments for execution."""
         if not self._running or not self._connection:
@@ -136,7 +139,7 @@ class Connection(Thread):
         return self
 
     def __await__(self) -> Generator[Any, None, "Connection"]:
-        self.start()
+        self._thread.start()
         return self._connect().__await__()
 
     async def __aenter__(self) -> "Connection":
@@ -354,6 +357,27 @@ class Connection(Thread):
             name=name,
             sleep=sleep,
         )
+
+    def __del__(self):
+        if self._connection is None:
+            return
+
+        warn(
+            (
+                f"{self!r} was deleted before being closed. "
+                "Please use 'async with' or '.close()' to close the connection properly."
+            ),
+            ResourceWarning,
+            stacklevel=1,
+        )
+
+        try:
+            asyncio.run_coroutine_threadsafe(self.close(), asyncio.get_event_loop())
+        except RuntimeError:
+            # The event loop has closed, so the connection can't be closed properly.
+            # We can still stop the worker thread so that the interpreter doesn't
+            # hang indefinitely on exit.
+            self._stop_running()
 
 
 def connect(
