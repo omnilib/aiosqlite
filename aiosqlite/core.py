@@ -62,7 +62,7 @@ class Connection(Thread):
                 DeprecationWarning,
             )
 
-    async def _stop_running(self):
+    def _stop_running(self) -> asyncio.Future:
         self._running = False
 
         function = partial(lambda: _STOP_RUNNING_SENTINEL)
@@ -70,7 +70,7 @@ class Connection(Thread):
 
         self._tx.put_nowait((future, function))
 
-        return await future
+        return future
 
     @property
     def _conn(self) -> sqlite3.Connection:
@@ -110,6 +110,7 @@ class Connection(Thread):
 
                 if result is _STOP_RUNNING_SENTINEL:
                     break
+
             except BaseException as e:  # noqa B036
                 LOG.debug("returning exception %s", e)
                 future.get_loop().call_soon_threadsafe(set_exception, future, e)
