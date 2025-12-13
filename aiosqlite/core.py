@@ -308,7 +308,7 @@ class Connection(Thread):
 
             import sqlite3
 
-            async def restrict_drops(action_code, arg1, arg2, db_name, trigger_name):
+            def restrict_drops(action_code, arg1, arg2, db_name, trigger_name):
                 # Deny all DROP operations
                 if action_code == sqlite3.SQLITE_DROP_TABLE:
                     return sqlite3.SQLITE_DENY
