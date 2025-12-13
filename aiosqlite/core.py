@@ -326,7 +326,8 @@ class Connection(Thread):
             - ``arg1`` (str): First argument, meaning depends on ``action_code``
             - ``arg2`` (str): Second argument, meaning depends on ``action_code``
             - ``db_name`` (str): Database name (e.g., ``"main"``, ``"temp"``)
-            - ``trigger_name`` (str): Name of trigger or view that is doing the access, or ``None``
+            - ``trigger_name`` (str): Name of trigger or view that is doing the access,
+              or ``None``
 
             The callback should return:
 
