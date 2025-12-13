@@ -21,6 +21,8 @@ from .cursor import Cursor
 
 __all__ = ["connect", "Connection", "Cursor"]
 
+AuthorizerCallback = Callable[[int, str, str, str, str], int]
+
 LOG = logging.getLogger("aiosqlite")
 
 
@@ -292,6 +294,50 @@ class Connection(Thread):
 
     async def set_trace_callback(self, handler: Callable) -> None:
         await self._execute(self._conn.set_trace_callback, handler)
+
+    async def set_authorizer(
+        self, authorizer_callback: Optional[AuthorizerCallback]
+    ) -> None:
+        """
+        Set an authorizer callback to control database access.
+
+        The authorizer callback is invoked for each SQL statement that is prepared,
+        and controls whether specific operations are permitted.
+
+        Example::
+
+            import sqlite3
+
+            def restrict_drops(action_code, arg1, arg2, db_name, trigger_name):
+                # Deny all DROP operations
+                if action_code == sqlite3.SQLITE_DROP_TABLE:
+                    return sqlite3.SQLITE_DENY
+                # Allow everything else
+                return sqlite3.SQLITE_OK
+
+            await conn.set_authorizer(restrict_drops)
+
+        See ``sqlite3`` documentation for details:
+        https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.set_authorizer
+
+        :param authorizer_callback: An optional callable that receives five arguments:
+
+            - ``action_code`` (int): The action to be authorized (e.g., ``SQLITE_READ``)
+            - ``arg1`` (str): First argument, meaning depends on ``action_code``
+            - ``arg2`` (str): Second argument, meaning depends on ``action_code``
+            - ``db_name`` (str): Database name (e.g., ``"main"``, ``"temp"``)
+            - ``trigger_name`` (str): Name of trigger or view that is doing the access,
+              or ``None``
+
+            The callback should return:
+
+            - ``SQLITE_OK`` (0): Allow the operation
+            - ``SQLITE_DENY`` (1): Deny the operation, raise ``sqlite3.DatabaseError``
+            - ``SQLITE_IGNORE`` (2): Treat operation as no-op
+
+            Pass ``None`` to remove the authorizer.
+        """
+        await self._execute(self._conn.set_authorizer, authorizer_callback)
 
     async def iterdump(self) -> AsyncIterator[str]:
         """
