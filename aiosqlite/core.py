@@ -58,22 +58,20 @@ def _connection_worker_thread(
         # futures)
 
         tx_item = tx.get()
-        if tx_item is _STOP_RUNNING_SENTINEL:
-            break
-
         future, function = tx_item
 
         try:
+            LOG.debug("executing %s", function)
             result = function()
-            set_fn = set_result
-        except BaseException as e:  # noqa B036
-            result = e
-            set_fn = set_exception  # type: ignore[assignment]
+            LOG.debug("operation %s completed", function)
+            future.get_loop().call_soon_threadsafe(set_result, future, result)
 
-        try:
-            future.get_loop().call_soon_threadsafe(set_fn, future, result)
+            if result is _STOP_RUNNING_SENTINEL:
+                break
+
         except BaseException as e:  # noqa B036
-            LOG.warning("could not send future result: %r", tx_item, exc_info=e)
+            LOG.debug("returning exception %s", e)
+            future.get_loop().call_soon_threadsafe(set_exception, future, e)
 
 
 class Connection:
