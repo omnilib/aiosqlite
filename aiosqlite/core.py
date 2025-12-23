@@ -42,11 +42,10 @@ def set_exception(fut: asyncio.Future, e: BaseException) -> None:
 
 
 _STOP_RUNNING_SENTINEL = object()
+_TxQueue = SimpleQueue[tuple[Optional[asyncio.Future], Callable[[], Any]]]
 
 
-def _connection_worker_thread(
-    tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]],
-):
+def _connection_worker_thread(tx: _TxQueue):
     """
     Execute function calls on a separate thread.
 
@@ -57,21 +56,23 @@ def _connection_worker_thread(
         # even after connection is closed (so we can finalize all
         # futures)
 
-        tx_item = tx.get()
-        future, function = tx_item
+        future, function = tx.get()
 
         try:
             LOG.debug("executing %s", function)
             result = function()
+
+            if future:
+                future.get_loop().call_soon_threadsafe(set_result, future, result)
             LOG.debug("operation %s completed", function)
-            future.get_loop().call_soon_threadsafe(set_result, future, result)
 
             if result is _STOP_RUNNING_SENTINEL:
                 break
 
         except BaseException as e:  # noqa B036
             LOG.debug("returning exception %s", e)
-            future.get_loop().call_soon_threadsafe(set_exception, future, e)
+            if future:
+                future.get_loop().call_soon_threadsafe(set_exception, future, e)
 
 
 class Connection:
@@ -84,7 +85,7 @@ class Connection:
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
         self._connector = connector
-        self._tx: SimpleQueue[tuple[asyncio.Future, Callable[[], Any]]] = SimpleQueue()
+        self._tx: _TxQueue = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
         self._thread = Thread(target=_connection_worker_thread, args=(self._tx,))
 
@@ -94,14 +95,40 @@ class Connection:
                 DeprecationWarning,
             )
 
-    def _stop_running(self) -> asyncio.Future:
+    def __del__(self):
+        if self._connection is None:
+            return
+
+        warn(
+            (
+                f"{self!r} was deleted before being closed. "
+                "Please use 'async with' or '.close()' to close the connection properly."
+            ),
+            ResourceWarning,
+            stacklevel=1,
+        )
+
+        # Don't try to be creative here, the event loop may have already been closed.
+        # Simply stop the worker thread, and let the underlying sqlite3 connection
+        # be finalized by its own __del__.
+        self.stop()
+
+    def stop(self) -> Optional[asyncio.Future]:
+        """Stop the background thread. Prefer `async with` or `await close()`"""
         self._running = False
 
-        function = partial(lambda: _STOP_RUNNING_SENTINEL)
-        future = asyncio.get_event_loop().create_future()
+        def close_and_stop():
+            if self._connection is not None:
+                self._connection.close()
+                self._connection = None
+            return _STOP_RUNNING_SENTINEL
 
-        self._tx.put_nowait((future, function))
+        try:
+            future = asyncio.get_event_loop().create_future()
+        except Exception:
+            future = None
 
+        self._tx.put_nowait((future, close_and_stop))
         return future
 
     @property
@@ -140,7 +167,7 @@ class Connection:
                 self._tx.put_nowait((future, self._connector))
                 self._connection = await future
             except BaseException:
-                await self._stop_running()
+                self.stop()
                 self._connection = None
                 raise
 
@@ -181,8 +208,10 @@ class Connection:
             LOG.info("exception occurred while closing connection")
             raise
         finally:
-            await self._stop_running()
             self._connection = None
+            future = self.stop()
+            if future:
+                await future
 
     @contextmanager
     async def execute(
@@ -409,24 +438,6 @@ class Connection:
             name=name,
             sleep=sleep,
         )
-
-    def __del__(self):
-        if self._connection is None:
-            return
-
-        warn(
-            (
-                f"{self!r} was deleted before being closed. "
-                "Please use 'async with' or '.close()' to close the connection properly."
-            ),
-            ResourceWarning,
-            stacklevel=1,
-        )
-
-        # Don't try to be creative here, the event loop may have already been closed.
-        # Simply stop the worker thread, and let the underlying sqlite3 connection
-        # be finalized by its own __del__.
-        self._stop_running()
 
 
 def connect(

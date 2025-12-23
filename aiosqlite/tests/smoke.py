@@ -404,7 +404,7 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 ...
         # Terminate the thread here if the test fails to have a clear error.
         if connection._running:
-            connection._stop_running()
+            connection.stop()
             raise AssertionError("connection thread was not stopped")
 
     async def test_iterdump(self):
@@ -518,3 +518,20 @@ class SmokeTest(IsolatedAsyncioTestCase):
             ResourceWarning, r".*was deleted before being closed.*"
         ):
             del db
+
+    async def test_stop_without_close(self):
+        db = await aiosqlite.connect(":memory:")
+        await db.stop()
+
+    def test_stop_after_event_loop_closed(self):
+        db = None
+
+        async def inner():
+            nonlocal db
+            db = await aiosqlite.connect(":memory:")
+
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(inner())
+        loop.close()
+
+        db.stop()
