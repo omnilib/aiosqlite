@@ -59,7 +59,7 @@ jobs:
       - name: Build
         run: python -m build
       - name: Upload
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sdist
           path: dist
