@@ -8,10 +8,10 @@ import sqlite3
 import string
 import tempfile
 import time
-
 from unittest import IsolatedAsyncioTestCase as TestCase
 
 import aiosqlite
+
 from .smoke import setup_logger
 
 TEST_DB = ":memory:"

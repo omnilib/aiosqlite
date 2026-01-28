@@ -1,11 +1,15 @@
 # Copyright Amethyst Reese
 # Licensed under the MIT license
 
+from __future__ import annotations
+
 import sqlite3
-from collections.abc import AsyncIterator, Iterable
-from typing import Any, Callable, Optional, TYPE_CHECKING
+from collections.abc import AsyncIterator, Callable, Iterable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from .core import Connection
 
 
@@ -32,7 +36,7 @@ class Cursor:
         return await self._conn._execute(fn, *args, **kwargs)
 
     async def execute(
-        self, sql: str, parameters: Optional[Iterable[Any]] = None
+        self, sql: str, parameters: Iterable[Any] | None = None
     ) -> "Cursor":
         """Execute the given query."""
         if parameters is None:
@@ -52,11 +56,11 @@ class Cursor:
         await self._execute(self._cursor.executescript, sql_script)
         return self
 
-    async def fetchone(self) -> Optional[sqlite3.Row]:
+    async def fetchone(self) -> sqlite3.Row | None:
         """Fetch a single row."""
         return await self._execute(self._cursor.fetchone)
 
-    async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
+    async def fetchmany(self, size: int | None = None) -> Iterable[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
         args: tuple[int, ...] = ()
         if size is not None:
@@ -76,7 +80,7 @@ class Cursor:
         return self._cursor.rowcount
 
     @property
-    def lastrowid(self) -> Optional[int]:
+    def lastrowid(self) -> int | None:
         return self._cursor.lastrowid
 
     @property
@@ -92,11 +96,11 @@ class Cursor:
         return self._cursor.description
 
     @property
-    def row_factory(self) -> Optional[Callable[[sqlite3.Cursor, sqlite3.Row], object]]:
+    def row_factory(self) -> Callable[[sqlite3.Cursor, sqlite3.Row], object] | None:
         return self._cursor.row_factory
 
     @row_factory.setter
-    def row_factory(self, factory: Optional[type]) -> None:
+    def row_factory(self, factory: type | None) -> None:
         self._cursor.row_factory = factory
 
     @property
@@ -106,5 +110,10 @@ class Cursor:
     async def __aenter__(self):
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self, 
+        exc_type: type[BaseException] | None, 
+        exc_val: BaseException | None, 
+        exc_tb: "TracebackType" | None
+    ):
         await self.close()

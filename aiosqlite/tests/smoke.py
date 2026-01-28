@@ -12,6 +12,7 @@ from unittest import IsolatedAsyncioTestCase, SkipTest
 from unittest.mock import patch
 
 import aiosqlite
+
 from .helpers import setup_logger
 
 

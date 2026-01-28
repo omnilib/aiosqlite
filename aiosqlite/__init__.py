@@ -3,25 +3,15 @@
 
 """asyncio bridge to the standard sqlite3 module"""
 
-from sqlite3 import (  # pylint: disable=redefined-builtin
-    DatabaseError,
-    Error,
-    IntegrityError,
-    NotSupportedError,
-    OperationalError,
-    paramstyle,
-    ProgrammingError,
-    register_adapter,
-    register_converter,
-    Row,
-    sqlite_version,
-    sqlite_version_info,
-    Warning,
-)
+from sqlite3 import (DatabaseError, Error,  # pylint: disable=redefined-builtin
+                     IntegrityError, NotSupportedError, OperationalError,
+                     ProgrammingError, Row, Warning, paramstyle,
+                     register_adapter, register_converter, sqlite_version,
+                     sqlite_version_info)
 
 __author__ = "Amethyst Reese"
 from .__version__ import __version__
-from .core import connect, Connection, Cursor
+from .core import Connection, Cursor, connect
 
 __all__ = [
     "__version__",
