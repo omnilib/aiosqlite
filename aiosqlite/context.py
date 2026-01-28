@@ -2,10 +2,10 @@
 # Licensed under the MIT license
 
 
-from collections.abc import Coroutine, Generator
+from collections.abc import Callable, Coroutine, Generator
 from contextlib import AbstractAsyncContextManager
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from .cursor import Cursor
 
