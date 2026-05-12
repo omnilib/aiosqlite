@@ -256,6 +256,12 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 self.assertEqual(row["k"], 1)
                 self.assertEqual(row["d"], b"hi")
 
+    async def test_cursor_connection(self):
+        async with aiosqlite.connect(self.db) as db:
+            async with db.cursor() as cursor:
+                self.assertIs(cursor.connection, db)
+                await cursor.connection.commit()
+
     async def test_fetch_all(self):
         async with aiosqlite.connect(self.db) as db:
             await db.execute(
