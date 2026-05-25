@@ -126,6 +126,37 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
         assert len(rows) == 10
 
+    async def test_iterable_cursor_after_fetchmany(self):
+        async with aiosqlite.connect(self.db) as db:
+            cursor = await db.cursor()
+            await cursor.execute(
+                "create table iterable_cursor_after_fetchmany "
+                "(i integer primary key asc, k integer)"
+            )
+            await cursor.executemany(
+                "insert into iterable_cursor_after_fetchmany (k) values (?)",
+                [[i] for i in range(5)],
+            )
+            await db.commit()
+
+        async with aiosqlite.connect(self.db) as db:
+            cursor = await db.execute(
+                "select * from iterable_cursor_after_fetchmany"
+            )
+            first_two = await cursor.fetchmany(2)
+            self.assertEqual(len(first_two), 2)
+            self.assertEqual(first_two[0], (1, 0))
+            self.assertEqual(first_two[1], (2, 1))
+
+            remaining = []
+            async for row in cursor:
+                remaining.append(row)
+
+            self.assertEqual(len(remaining), 3)
+            self.assertEqual(remaining[0], (3, 2))
+            self.assertEqual(remaining[1], (4, 3))
+            self.assertEqual(remaining[2], (5, 4))
+
     async def test_multi_loop_usage(self):
         results = {}
 
