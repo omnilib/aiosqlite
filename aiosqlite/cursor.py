@@ -19,7 +19,7 @@ class Cursor:
         """The cursor proxy is also an async iterator."""
         return self._fetch_chunked()
 
-    async def _fetch_chunked(self):
+    async def _fetch_chunked(self) -> AsyncIterator[sqlite3.Row]:
         while True:
             rows = await self.fetchmany(self.iter_chunk_size)
             if not rows:
@@ -56,14 +56,14 @@ class Cursor:
         """Fetch a single row."""
         return await self._execute(self._cursor.fetchone)
 
-    async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
+    async def fetchmany(self, size: Optional[int] = None) -> list[sqlite3.Row]:
         """Fetch up to `cursor.arraysize` number of rows."""
         args: tuple[int, ...] = ()
         if size is not None:
             args = (size,)
         return await self._execute(self._cursor.fetchmany, *args)
 
-    async def fetchall(self) -> Iterable[sqlite3.Row]:
+    async def fetchall(self) -> list[sqlite3.Row]:
         """Fetch all remaining rows."""
         return await self._execute(self._cursor.fetchall)
 
@@ -103,8 +103,8 @@ class Cursor:
     def connection(self) -> sqlite3.Connection:
         return self._cursor.connection
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Cursor":
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.close()
