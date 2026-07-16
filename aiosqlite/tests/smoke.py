@@ -271,6 +271,49 @@ class SmokeTest(IsolatedAsyncioTestCase):
             rows = await cursor.fetchall()
             self.assertEqual(rows, [(10,), (24,), (16,)])
 
+    async def test_execute_insert(self):
+        async with aiosqlite.connect(self.db) as db:
+            await db.execute(
+                "create table test_execute_insert "
+                "(i integer primary key asc, k integer)"
+            )
+
+            result = await db.execute_insert(
+                "insert into test_execute_insert (k) values (?)", [10]
+            )
+            self.assertEqual(result, (1,))
+            self.assertEqual(result[0], 1)
+
+            result = await db.execute_insert(
+                "insert into test_execute_insert (k) values (?)", [24]
+            )
+            self.assertEqual(result, (2,))
+
+            # multiple rows: lastrowid points at the final inserted row
+            result = await db.execute_insert(
+                "insert into test_execute_insert (k) values (16), (32)"
+            )
+            self.assertEqual(result, (4,))
+
+            # a statement that inserts nothing retains the connection's last
+            # insert rowid (matching the previous last_insert_rowid() behavior)
+            result = await db.execute_insert(
+                "delete from test_execute_insert where k = ?", [10]
+            )
+            self.assertEqual(result, (4,))
+
+    async def test_execute_insert_no_prior_insert(self):
+        async with aiosqlite.connect(self.db) as db:
+            await db.execute(
+                "create table test_execute_insert_none (i integer, k integer)"
+            )
+
+            # with no insert on the connection yet, rowid is 0 (not None)
+            result = await db.execute_insert(
+                "delete from test_execute_insert_none where k = ?", [10]
+            )
+            self.assertEqual(result, (0,))
+
     async def test_enable_load_extension(self):
         """Assert that after enabling extension loading, they can be loaded"""
         async with aiosqlite.connect(self.db) as db:

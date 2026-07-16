@@ -138,10 +138,9 @@ class Connection:
 
         return self._connection
 
-    def _execute_insert(self, sql: str, parameters: Any) -> Optional[sqlite3.Row]:
+    def _execute_insert(self, sql: str, parameters: Any) -> Optional[tuple]:
         cursor = self._conn.execute(sql, parameters)
-        cursor.execute("SELECT last_insert_rowid()")
-        return cursor.fetchone()
+        return (cursor.lastrowid,)
 
     def _execute_fetchall(self, sql: str, parameters: Any) -> Iterable[sqlite3.Row]:
         cursor = self._conn.execute(sql, parameters)
@@ -226,7 +225,7 @@ class Connection:
     @contextmanager
     async def execute_insert(
         self, sql: str, parameters: Optional[Iterable[Any]] = None
-    ) -> Optional[sqlite3.Row]:
+    ) -> Optional[tuple]:
         """Helper to insert and get the last_insert_rowid."""
         if parameters is None:
             parameters = []
