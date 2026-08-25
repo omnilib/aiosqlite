@@ -21,6 +21,7 @@ from sqlite3 import (  # pylint: disable=redefined-builtin
 
 __author__ = "Amethyst Reese"
 from .__version__ import __version__
+from .blob import Blob
 from .core import connect, Connection, Cursor
 
 __all__ = [
@@ -33,6 +34,7 @@ __all__ = [
     "connect",
     "Connection",
     "Cursor",
+    "Blob",
     "Row",
     "Warning",
     "Error",

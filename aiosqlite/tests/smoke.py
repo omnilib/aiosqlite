@@ -381,6 +381,52 @@ class SmokeTest(IsolatedAsyncioTestCase):
             with self.assertRaises(sqlite3.DatabaseError):
                 await db.execute("CREATE TABLE test_exception (id INTEGER)")
 
+    async def test_blob(self):
+        """Read and write a blob incrementally via blobopen"""
+        if sys.version_info < (3, 11):
+            raise SkipTest("sqlite3.Blob requires Python 3.11 or newer")
+
+        async with aiosqlite.connect(self.db) as db:
+            await db.execute("CREATE TABLE blobs (data BLOB)")
+            await db.execute("INSERT INTO blobs (data) VALUES (zeroblob(10))")
+            await db.commit()
+
+            cursor = await db.execute("SELECT rowid FROM blobs")
+            row = await cursor.fetchone()
+            row_id = row[0]
+
+            async with db.blobopen("blobs", "data", row_id) as blob:
+                self.assertEqual(await blob.length(), 10)
+                await blob.write(b"hello")
+                self.assertEqual(await blob.tell(), 5)
+                await blob.seek(0)
+                self.assertEqual(await blob.read(5), b"hello")
+
+            cursor = await db.execute("SELECT data FROM blobs")
+            row = await cursor.fetchone()
+            self.assertEqual(row[0][:5], b"hello")
+
+    async def test_blob_readonly(self):
+        """A readonly blob cannot be written to"""
+        if sys.version_info < (3, 11):
+            raise SkipTest("sqlite3.Blob requires Python 3.11 or newer")
+
+        async with aiosqlite.connect(self.db) as db:
+            await db.execute("CREATE TABLE blobs (data BLOB)")
+            await db.execute("INSERT INTO blobs (data) VALUES (zeroblob(5))")
+            await db.commit()
+
+            cursor = await db.execute("SELECT rowid FROM blobs")
+            row = await cursor.fetchone()
+            row_id = row[0]
+
+            blob = await db.blobopen("blobs", "data", row_id, readonly=True)
+            try:
+                with self.assertRaises(sqlite3.OperationalError):
+                    await blob.write(b"x")
+            finally:
+                await blob.close()
+
     async def test_connect_error(self):
         bad_db = Path("/something/that/shouldnt/exist.db")
         with self.assertRaisesRegex(OperationalError, "unable to open database"):

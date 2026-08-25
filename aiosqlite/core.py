@@ -16,10 +16,11 @@ from threading import Thread
 from typing import Any, Callable, Literal, Optional, Union
 from warnings import warn
 
+from .blob import Blob
 from .context import contextmanager
 from .cursor import Cursor
 
-__all__ = ["connect", "Connection", "Cursor"]
+__all__ = ["connect", "Connection", "Cursor", "Blob"]
 
 AuthorizerCallback = Callable[[int, str, str, str, str], int]
 
@@ -254,6 +255,45 @@ class Connection:
         """Helper to create a cursor and execute a user script."""
         cursor = await self._execute(self._conn.executescript, sql_script)
         return Cursor(self, cursor)
+
+    @contextmanager
+    async def blobopen(
+        self,
+        table: str,
+        column: str,
+        row: int,
+        *,
+        readonly: bool = False,
+        name: str = "main",
+    ) -> Blob:
+        """
+        Open a blob for incremental I/O and return an :class:`Blob` proxy.
+
+        The blob is bound to an existing row and column, so the row must already
+        contain a blob (for example one created with ``zeroblob(size)``). The
+        proxy runs every read/write on the connection's thread, and is best used
+        as an async context manager so it gets closed automatically::
+
+            async with db.blobopen("some_table", "data", row_id) as blob:
+                await blob.write(b"hello world")
+
+        Requires Python 3.11 or newer.
+
+        :param table: Name of the table containing the target blob.
+        :param column: Name of the column containing the target blob.
+        :param row: The ``ROWID`` of the row containing the target blob.
+        :param readonly: Open the blob without write permission if true.
+        :param name: Name of the database where the target blob is located.
+        """
+        blob = await self._execute(
+            self._conn.blobopen,  # type: ignore[attr-defined]  # added in 3.11
+            table,
+            column,
+            row,
+            readonly=readonly,
+            name=name,
+        )
+        return Blob(self, blob)
 
     async def interrupt(self) -> None:
         """Interrupt pending queries."""

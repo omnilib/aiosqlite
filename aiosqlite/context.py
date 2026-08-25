@@ -7,6 +7,7 @@ from contextlib import AbstractAsyncContextManager
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
+from .blob import Blob
 from .cursor import Cursor
 
 _T = TypeVar("_T")
@@ -42,7 +43,7 @@ class Result(AbstractAsyncContextManager[_T], Coroutine[Any, Any, _T]):
         return self._obj
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
-        if isinstance(self._obj, Cursor):
+        if isinstance(self._obj, (Cursor, Blob)):
             await self._obj.close()
 
 
