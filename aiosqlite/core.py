@@ -184,9 +184,9 @@ class Connection:
         await self.close()
 
     @contextmanager
-    async def cursor(self) -> Cursor:
-        """Create an aiosqlite cursor wrapping a sqlite3 cursor object."""
-        return Cursor(self, await self._execute(self._conn.cursor))
+    async def cursor(self, *args: Any, **kwargs: Any) -> Cursor:
+        """Create an aiosqlite cursor, forwarding arguments to sqlite3.Connection.cursor."""
+        return Cursor(self, await self._execute(self._conn.cursor, *args, **kwargs))
 
     async def commit(self) -> None:
         """Commit the current transaction."""

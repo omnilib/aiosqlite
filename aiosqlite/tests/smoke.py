@@ -180,6 +180,49 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
         assert len(rows) == 10
 
+    async def test_cursor_factory(self):
+        class UppercaseCursor(sqlite3.Cursor):
+            def fetchone(self):
+                row = super().fetchone()
+                return None if row is None else (row[0].upper(),)
+
+        async with aiosqlite.connect(self.db) as db:
+            cursor = await db.cursor(UppercaseCursor)
+            try:
+                await cursor.execute("select 'hello'")
+                self.assertEqual(await cursor.fetchone(), ("HELLO",))
+                self.assertIsNone(await cursor.fetchone())
+            finally:
+                await cursor.close()
+
+    async def test_context_cursor_factory(self):
+        def factory(connection):
+            # Using the connection here requires running on its worker thread.
+            connection.execute("select 1").close()
+            cursor = sqlite3.Cursor(connection)
+            cursor.row_factory = lambda cursor, row: {"value": row[0]}
+            return cursor
+
+        async with aiosqlite.connect(self.db) as db:
+            async with db.cursor(factory=factory) as cursor:
+                await cursor.execute("select 'hello'")
+                self.assertEqual(await cursor.fetchone(), {"value": "hello"})
+
+            with self.assertRaises(sqlite3.ProgrammingError):
+                await cursor.fetchone()
+
+    async def test_cursor_preserves_connection_default(self):
+        class CustomConnection(sqlite3.Connection):
+            def cursor(self):
+                cursor = super().cursor()
+                cursor.row_factory = lambda cursor, row: {"value": row[0]}
+                return cursor
+
+        async with aiosqlite.connect(self.db, factory=CustomConnection) as db:
+            async with db.cursor() as cursor:
+                await cursor.execute("select 'hello'")
+                self.assertEqual(await cursor.fetchone(), {"value": "hello"})
+
     async def test_cursor_return_self(self):
         async with aiosqlite.connect(self.db) as db:
             cursor = await db.cursor()
