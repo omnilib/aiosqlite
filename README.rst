@@ -55,6 +55,27 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``:
         assert db.total_changes > 0
 
 
+To use a custom ``sqlite3.Cursor`` subclass or factory callable, pass it to
+``db.cursor(factory=...)``. The factory runs on the connection's worker thread,
+and its result is wrapped in an aiosqlite cursor with the usual async methods
+and context management:
+
+.. code-block:: python
+
+    import sqlite3
+
+    def named_cursor(connection):
+        cursor = sqlite3.Cursor(connection)
+        cursor.row_factory = sqlite3.Row
+        return cursor
+
+    async with aiosqlite.connect(":memory:") as db:
+        async with db.cursor(factory=named_cursor) as cursor:
+            await cursor.execute("SELECT 42 AS answer")
+            row = await cursor.fetchone()
+            assert row["answer"] == 42
+
+
 Install
 -------
 
