@@ -535,3 +535,11 @@ class SmokeTest(IsolatedAsyncioTestCase):
         loop.close()
 
         db.stop()
+
+    async def test_cursor_connection(self):
+        async with aiosqlite.connect(self.db) as db:
+            cursor = await db.cursor()
+            self.assertIs(cursor.connection, db)
+            await cursor.execute("create table test (id int)")
+            await cursor.connection.commit()
+            await cursor.close()
