@@ -43,6 +43,25 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 rows = await cursor.fetchall()
                 self.assertEqual(rows, [(1, 2)])
 
+    async def test_cursor_fetch_result_lists(self) -> None:
+        async with aiosqlite.connect(self.db) as db:
+            db.row_factory = sqlite3.Row
+            async with db.execute("select 1 union all select 2") as cursor:
+                rows: list[sqlite3.Row] = await cursor.fetchmany(1)
+                self.assertIsInstance(rows, list)
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0][0], 1)
+
+                remaining: list[sqlite3.Row] = await cursor.fetchall()
+                self.assertIsInstance(remaining, list)
+                self.assertEqual(len(remaining), 1)
+                self.assertEqual(remaining[0][0], 2)
+
+                empty_all: list[sqlite3.Row] = await cursor.fetchall()
+                empty_many: list[sqlite3.Row] = await cursor.fetchmany(1)
+                self.assertEqual(empty_all, [])
+                self.assertEqual(empty_many, [])
+
     async def test_connection_locations(self):
         TEST_DB = self.db.as_posix()
 

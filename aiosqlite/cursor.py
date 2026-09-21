@@ -56,15 +56,15 @@ class Cursor:
         """Fetch a single row."""
         return await self._execute(self._cursor.fetchone)
 
-    async def fetchmany(self, size: Optional[int] = None) -> Iterable[sqlite3.Row]:
-        """Fetch up to `cursor.arraysize` number of rows."""
+    async def fetchmany(self, size: Optional[int] = None) -> list[sqlite3.Row]:
+        """Fetch up to `cursor.arraysize` number of rows as a list."""
         args: tuple[int, ...] = ()
         if size is not None:
             args = (size,)
         return await self._execute(self._cursor.fetchmany, *args)
 
-    async def fetchall(self) -> Iterable[sqlite3.Row]:
-        """Fetch all remaining rows."""
+    async def fetchall(self) -> list[sqlite3.Row]:
+        """Fetch all remaining rows as a list."""
         return await self._execute(self._cursor.fetchall)
 
     async def close(self) -> None:
