@@ -181,7 +181,11 @@ class Connection:
         return await self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self.close()
+        try:
+            if self._connection is not None:
+                await self._execute(self._conn.__exit__, exc_type, exc_val, exc_tb)
+        finally:
+            await self.close()
 
     @contextmanager
     async def cursor(self) -> Cursor:

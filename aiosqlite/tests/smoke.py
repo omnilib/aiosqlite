@@ -43,6 +43,75 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 rows = await cursor.fetchall()
                 self.assertEqual(rows, [(1, 2)])
 
+    async def test_connection_context_commits(self):
+        options = [
+            {"isolation_level": level}
+            for level in (None, "", "DEFERRED", "IMMEDIATE", "EXCLUSIVE")
+        ]
+        if sys.version_info >= (3, 12):
+            options.extend([{"autocommit": True}, {"autocommit": False}])
+
+        for kwargs in options:
+            with self.subTest(kwargs=kwargs):
+                with sqlite3.connect(self.db) as setup:
+                    setup.execute("drop table if exists context_transaction")
+                    setup.execute("create table context_transaction (value integer)")
+                setup.close()
+
+                async with aiosqlite.connect(self.db, **kwargs) as db:
+                    await db.execute("insert into context_transaction values (42)")
+
+                with sqlite3.connect(self.db) as check:
+                    self.assertEqual(
+                        check.execute("select * from context_transaction").fetchall(),
+                        [(42,)],
+                    )
+                check.close()
+                with self.assertRaisesRegex(ValueError, "no active connection"):
+                    await db.execute("select 1")
+
+    async def test_connection_context_rolls_back(self):
+        with sqlite3.connect(self.db) as setup:
+            setup.execute("create table context_transaction (value integer)")
+        setup.close()
+
+        with self.assertRaisesRegex(RuntimeError, "abort transaction"):
+            async with aiosqlite.connect(self.db) as db:
+                await db.execute("insert into context_transaction values (42)")
+                raise RuntimeError("abort transaction")
+
+        with sqlite3.connect(self.db) as check:
+            self.assertEqual(
+                check.execute("select * from context_transaction").fetchall(), []
+            )
+        check.close()
+        with self.assertRaisesRegex(ValueError, "no active connection"):
+            await db.execute("select 1")
+
+    async def test_connection_context_failed_commit(self):
+        with sqlite3.connect(self.db) as setup:
+            setup.execute("create table parent (id integer primary key)")
+            setup.execute(
+                "create table child (parent_id integer references parent(id) "
+                "deferrable initially deferred)"
+            )
+        setup.close()
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "FOREIGN KEY"):
+            async with aiosqlite.connect(self.db) as db:
+                await db.execute("pragma foreign_keys = on")
+                await db.execute("insert into child values (42)")
+
+        with sqlite3.connect(self.db) as check:
+            self.assertEqual(check.execute("select * from child").fetchall(), [])
+        check.close()
+        with self.assertRaisesRegex(ValueError, "no active connection"):
+            await db.execute("select 1")
+
+    async def test_connection_context_closed_inside(self):
+        async with aiosqlite.connect(self.db) as db:
+            await db.close()
+
     async def test_connection_locations(self):
         TEST_DB = self.db.as_posix()
 

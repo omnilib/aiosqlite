@@ -30,6 +30,12 @@ automatically closing connections and cursors:
             async for row in cursor:
                 ...
 
+The connection context manager commits an open transaction on successful exit,
+or rolls it back if an exception occurs, following ``sqlite3`` transaction
+semantics. It closes the connection in either case, including when committing
+fails. Explicit calls to ``commit()`` and ``rollback()`` remain available within
+the context.
+
 It can also be used in the traditional, procedural manner:
 
 .. code-block:: python
