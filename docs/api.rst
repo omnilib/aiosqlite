@@ -27,7 +27,13 @@ Errors
 .. autoexception:: Error
     :members:
 
+.. autoexception:: InterfaceError
+    :members:
+
 .. autoexception:: DatabaseError
+    :members:
+
+.. autoexception:: DataError
     :members:
 
 .. autoexception:: IntegrityError
@@ -37,6 +43,9 @@ Errors
     :members:
 
 .. autoexception:: OperationalError
+    :members:
+
+.. autoexception:: InternalError
     :members:
 
 .. autoexception:: NotSupportedError

@@ -54,6 +54,10 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``:
         await db.execute('INSERT INTO foo some_table')
         assert db.total_changes > 0
 
+SQLite exception types, including ``DataError``, ``InterfaceError``, and
+``InternalError``, are available from ``aiosqlite`` as aliases of their
+``sqlite3`` counterparts, so callers can catch errors raised by awaited queries.
+
 
 Install
 -------

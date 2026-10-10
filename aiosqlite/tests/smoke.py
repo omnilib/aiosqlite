@@ -25,6 +25,29 @@ class SmokeTest(IsolatedAsyncioTestCase):
         self.addCleanup(td.cleanup)
         self.db = Path(td.name).resolve() / "test.db"
 
+    def test_error_types(self):
+        for name in (
+            "Warning",
+            "Error",
+            "InterfaceError",
+            "DatabaseError",
+            "DataError",
+            "OperationalError",
+            "IntegrityError",
+            "InternalError",
+            "ProgrammingError",
+            "NotSupportedError",
+        ):
+            with self.subTest(name=name):
+                self.assertIs(getattr(aiosqlite, name), getattr(sqlite3, name))
+                self.assertIn(name, aiosqlite.__all__)
+
+    async def test_data_error(self):
+        async with aiosqlite.connect(":memory:") as db:
+            # SQLite rejects this above its hard length limit before allocating.
+            with self.assertRaises(aiosqlite.DataError):
+                await db.execute("select zeroblob(2147483648)")
+
     async def test_connection_await(self):
         db = await aiosqlite.connect(self.db)
         self.assertIsInstance(db, aiosqlite.Connection)

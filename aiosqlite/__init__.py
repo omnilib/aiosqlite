@@ -5,8 +5,11 @@
 
 from sqlite3 import (  # pylint: disable=redefined-builtin
     DatabaseError,
+    DataError,
     Error,
     IntegrityError,
+    InterfaceError,
+    InternalError,
     NotSupportedError,
     OperationalError,
     paramstyle,
@@ -36,9 +39,12 @@ __all__ = [
     "Row",
     "Warning",
     "Error",
+    "InterfaceError",
     "DatabaseError",
+    "DataError",
     "IntegrityError",
     "ProgrammingError",
     "OperationalError",
+    "InternalError",
     "NotSupportedError",
 ]
