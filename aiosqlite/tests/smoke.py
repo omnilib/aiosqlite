@@ -2,8 +2,10 @@
 # Licensed under the MIT license
 
 import asyncio
+import logging
 import sqlite3
 import sys
+from contextvars import ContextVar
 from pathlib import Path
 from sqlite3 import OperationalError
 from tempfile import TemporaryDirectory
@@ -34,6 +36,97 @@ class SmokeTest(IsolatedAsyncioTestCase):
             self.assertEqual(rows, [(1, 2)])
 
         await db.close()
+
+    async def test_contextvars_connection(self):
+        request = ContextVar("request", default="missing")
+        observed = []
+
+        class ContextConnection(sqlite3.Connection):
+            def __init__(self, *args, **kwargs):
+                observed.append(request.get())
+                super().__init__(*args, **kwargs)
+
+        request.set("connecting")
+        async with aiosqlite.connect(self.db, factory=ContextConnection):
+            pass
+        self.assertEqual(observed, ["connecting"])
+
+    async def test_contextvars_operations(self):
+        request = ContextVar("request", default="missing")
+
+        def modify_worker_context():
+            request.set("worker-only")
+            return 1
+
+        async with aiosqlite.connect(self.db) as db:
+            await db.create_function("request_context", 0, request.get)
+            await db.create_function("modify_context", 0, modify_worker_context)
+
+            async def query(value):
+                request.set(value)
+                for _ in range(2):
+                    rows = await db.execute_fetchall(
+                        "select request_context(), modify_context()"
+                    )
+                    self.assertEqual(rows, [(value, 1)])
+                    self.assertEqual(request.get(), value)
+
+            await asyncio.gather(query("first"), query("second"))
+            self.assertEqual(request.get(), "missing")
+            self.assertEqual(
+                await db.execute_fetchall("select request_context()"), [("missing",)]
+            )
+
+    async def test_contextvars_logging(self):
+        request = ContextVar("request", default="missing")
+
+        class RequestFilter(logging.Filter):
+            def filter(self, record):
+                record.request_context = request.get()
+                return True
+
+        logger = logging.getLogger("aiosqlite")
+        log_filter = RequestFilter()
+        logger.addFilter(log_filter)
+        self.addCleanup(logger.removeFilter, log_filter)
+        with self.assertLogs(logger, level="DEBUG") as captured:
+            async with aiosqlite.connect(self.db) as db:
+                request.set("success")
+                await db.execute("select 'context-success'")
+                request.set("failure")
+                with self.assertRaises(sqlite3.OperationalError):
+                    await db.execute("select * from context_failure")
+
+        success = [
+            record
+            for record in captured.records
+            if "context-success" in record.getMessage()
+        ]
+        failure = [
+            record
+            for record in captured.records
+            if record.getMessage().startswith("returning exception")
+        ]
+        self.assertEqual(len(success), 2)
+        self.assertTrue(all(record.request_context == "success" for record in success))
+        self.assertEqual(len(failure), 1)
+        self.assertEqual(failure[0].request_context, "failure")
+
+    async def test_contextvars_stop(self):
+        request = ContextVar("request", default="missing")
+        observed = []
+
+        class ContextConnection(sqlite3.Connection):
+            def close(self):
+                observed.append(request.get())
+                return super().close()
+
+        db = await aiosqlite.connect(self.db, factory=ContextConnection)
+        request.set("stopping")
+        future = db.stop()
+        self.assertIsNotNone(future)
+        await future
+        self.assertEqual(observed, ["stopping"])
 
     async def test_connection_context(self):
         async with aiosqlite.connect(self.db) as db:

@@ -75,6 +75,10 @@ or data fetches.  It does this by using a single, shared thread per connection.
 This thread executes all actions within a shared request queue to prevent
 overlapping actions.
 
+Each queued action runs with a copy of its caller's ``contextvars`` context,
+including SQLite callbacks and aiosqlite's worker-thread logging. Context-variable
+assignments made by an action do not leak into later actions or the caller.
+
 Connection objects are proxies to the real connections, contain the shared
 execution thread, and provide context managers to handle automatically closing
 connections.  Cursors are similarly proxies to the real cursors, and provide

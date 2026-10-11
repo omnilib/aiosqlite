@@ -9,6 +9,7 @@ import asyncio
 import logging
 import sqlite3
 from collections.abc import AsyncIterator, Generator, Iterable
+from contextvars import Context, copy_context
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
@@ -42,7 +43,23 @@ def set_exception(fut: asyncio.Future, e: BaseException) -> None:
 
 
 _STOP_RUNNING_SENTINEL = object()
-_TxQueue = SimpleQueue[tuple[Optional[asyncio.Future], Callable[[], Any]]]
+_TxQueue = SimpleQueue[tuple[Optional[asyncio.Future], Callable[[], Any], Context]]
+
+
+def _execute_function(future: Optional[asyncio.Future], function: Callable[[], Any]):
+    try:
+        LOG.debug("executing %s", function)
+        result = function()
+
+        if future:
+            future.get_loop().call_soon_threadsafe(set_result, future, result)
+        LOG.debug("operation %s completed", function)
+        return result
+
+    except BaseException as e:  # noqa B036
+        LOG.debug("returning exception %s", e)
+        if future:
+            future.get_loop().call_soon_threadsafe(set_exception, future, e)
 
 
 def _connection_worker_thread(tx: _TxQueue):
@@ -56,23 +73,16 @@ def _connection_worker_thread(tx: _TxQueue):
         # even after connection is closed (so we can finalize all
         # futures)
 
-        future, function = tx.get()
-
+        future, function, context = tx.get()
         try:
-            LOG.debug("executing %s", function)
-            result = function()
-
-            if future:
-                future.get_loop().call_soon_threadsafe(set_result, future, result)
-            LOG.debug("operation %s completed", function)
-
-            if result is _STOP_RUNNING_SENTINEL:
+            if (
+                context.run(_execute_function, future, function)
+                is _STOP_RUNNING_SENTINEL
+            ):
                 break
-
-        except BaseException as e:  # noqa B036
-            LOG.debug("returning exception %s", e)
-            if future:
-                future.get_loop().call_soon_threadsafe(set_exception, future, e)
+        finally:
+            # Do not retain request-local values while waiting for the next item.
+            del context
 
 
 class Connection:
@@ -128,7 +138,7 @@ class Connection:
         except Exception:
             future = None
 
-        self._tx.put_nowait((future, close_and_stop))
+        self._tx.put_nowait((future, close_and_stop, copy_context()))
         return future
 
     @property
@@ -155,7 +165,7 @@ class Connection:
         function = partial(fn, *args, **kwargs)
         future = asyncio.get_event_loop().create_future()
 
-        self._tx.put_nowait((future, function))
+        self._tx.put_nowait((future, function, copy_context()))
 
         return await future
 
@@ -164,7 +174,7 @@ class Connection:
         if self._connection is None:
             try:
                 future = asyncio.get_event_loop().create_future()
-                self._tx.put_nowait((future, self._connector))
+                self._tx.put_nowait((future, self._connector, copy_context()))
                 self._connection = await future
             except BaseException:
                 self.stop()
