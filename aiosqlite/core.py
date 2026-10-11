@@ -178,6 +178,8 @@ class Connection:
         return self._connect().__await__()
 
     async def __aenter__(self) -> "Connection":
+        if self._connection is not None:
+            return self
         return await self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
