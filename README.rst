@@ -80,6 +80,9 @@ execution thread, and provide context managers to handle automatically closing
 connections.  Cursors are similarly proxies to the real cursors, and provide
 async iterators to query results.
 
+If opening a database fails, the connection waits for its queued worker shutdown
+before propagating the error, so the caller can safely close its event loop.
+
 
 License
 -------
