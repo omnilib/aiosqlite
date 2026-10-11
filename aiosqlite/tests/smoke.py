@@ -43,6 +43,38 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 rows = await cursor.fetchall()
                 self.assertEqual(rows, [(1, 2)])
 
+    async def test_connection_context_after_await(self):
+        db = await aiosqlite.connect(self.db)
+        self.addAsyncCleanup(db.close)
+        db.row_factory = aiosqlite.Row
+
+        with patch.object(db._thread, "start", wraps=db._thread.start) as start:
+            async with db as connection:
+                self.assertIs(connection, db)
+                async with connection.execute("select 1 as value") as cursor:
+                    row = await cursor.fetchone()
+                    self.assertEqual(row["value"], 1)
+            start.assert_not_called()
+
+        self.assertIsNone(db._connection)
+        db._thread.join(timeout=1)
+        self.assertFalse(db._thread.is_alive())
+
+    async def test_connection_context_after_await_exception(self):
+        db = await aiosqlite.connect(self.db)
+        self.addAsyncCleanup(db.close)
+        error = ValueError("context body failed")
+
+        with self.assertRaises(ValueError) as raised:
+            async with db as connection:
+                self.assertIs(connection, db)
+                raise error
+
+        self.assertIs(raised.exception, error)
+        self.assertIsNone(db._connection)
+        db._thread.join(timeout=1)
+        self.assertFalse(db._thread.is_alive())
+
     async def test_connection_locations(self):
         TEST_DB = self.db.as_posix()
 

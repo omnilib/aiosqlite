@@ -41,6 +41,17 @@ It can also be used in the traditional, procedural manner:
     await cursor.close()
     await db.close()
 
+An already awaited connection can also be used as a context manager. It keeps
+its existing connection and settings, and closes the connection on exit:
+
+.. code-block:: python
+
+    db = await aiosqlite.connect(...)
+    db.row_factory = aiosqlite.Row
+    async with db:
+        async with db.execute('SELECT * FROM some_table') as cursor:
+            row = await cursor.fetchone()
+
 aiosqlite also replicates most of the advanced features of ``sqlite3``:
 
 .. code-block:: python
