@@ -167,8 +167,10 @@ class Connection:
                 self._tx.put_nowait((future, self._connector))
                 self._connection = await future
             except BaseException:
-                self.stop()
+                stop_future = self.stop()
                 self._connection = None
+                if stop_future is not None:
+                    await stop_future
                 raise
 
         return self

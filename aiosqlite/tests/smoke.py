@@ -5,9 +5,10 @@ import asyncio
 import sqlite3
 import sys
 from pathlib import Path
+from queue import SimpleQueue
 from sqlite3 import OperationalError
 from tempfile import TemporaryDirectory
-from threading import Thread
+from threading import Event, Thread
 from unittest import IsolatedAsyncioTestCase, SkipTest
 from unittest.mock import patch
 
@@ -389,6 +390,41 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(OperationalError, "unable to open database"):
             await aiosqlite.connect(bad_db)
+
+    async def test_connect_error_waits_for_worker_stop(self):
+        loop = asyncio.get_running_loop()
+        stopping = asyncio.Event()
+        release = Event()
+
+        class DelayedStopQueue(SimpleQueue):
+            def __init__(self):
+                super().__init__()
+                self.calls = 0
+
+            def get(self):
+                item = super().get()
+                self.calls += 1
+                if self.calls == 2:
+                    loop.call_soon_threadsafe(stopping.set)
+                    if not release.wait(5):
+                        raise TimeoutError("worker shutdown was not released")
+                return item
+
+        with patch("aiosqlite.core.SimpleQueue", DelayedStopQueue):
+            # Opening a directory fails in the real sqlite3 connector.
+            connection = aiosqlite.connect(self.db.parent)
+        task = asyncio.ensure_future(connection)
+        try:
+            await asyncio.wait_for(stopping.wait(), 5)
+            self.assertFalse(task.done(), "connect returned before worker shutdown")
+            release.set()
+            with self.assertRaisesRegex(OperationalError, "unable to open database"):
+                await task
+        finally:
+            release.set()
+            await asyncio.gather(task, return_exceptions=True)
+            await loop.run_in_executor(None, connection._thread.join, 5)
+        self.assertFalse(connection._thread.is_alive())
 
     async def test_connect_base_exception(self):
         # Check if connect task is cancelled, thread is properly closed.
