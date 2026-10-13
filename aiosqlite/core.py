@@ -45,6 +45,19 @@ _STOP_RUNNING_SENTINEL = object()
 _TxQueue = SimpleQueue[tuple[Optional[asyncio.Future], Callable[[], Any]]]
 
 
+def _call_soon_threadsafe(
+    loop: asyncio.AbstractEventLoop, callback: Callable[..., None], *args: Any
+) -> None:
+    if loop.is_closed():
+        return
+    try:
+        loop.call_soon_threadsafe(callback, *args)
+    except RuntimeError:
+        # The loop can close between the check and scheduling from this thread.
+        if not loop.is_closed():
+            raise
+
+
 def _connection_worker_thread(tx: _TxQueue):
     """
     Execute function calls on a separate thread.
@@ -67,16 +80,16 @@ def _connection_worker_thread(tx: _TxQueue):
                 # Do not retain a connection while the worker waits for its next item.
                 del function
 
-            if future and not future.get_loop().is_closed():
-                future.get_loop().call_soon_threadsafe(set_result, future, result)
+            if future:
+                _call_soon_threadsafe(future.get_loop(), set_result, future, result)
 
             if result is _STOP_RUNNING_SENTINEL:
                 break
 
         except BaseException as e:  # noqa B036
             LOG.debug("returning exception %s", e)
-            if future and not future.get_loop().is_closed():
-                future.get_loop().call_soon_threadsafe(set_exception, future, e)
+            if future:
+                _call_soon_threadsafe(future.get_loop(), set_exception, future, e)
 
 
 class Connection:

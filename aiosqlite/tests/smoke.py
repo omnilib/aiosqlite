@@ -12,6 +12,7 @@ from unittest import IsolatedAsyncioTestCase, SkipTest
 from unittest.mock import patch
 
 import aiosqlite
+from aiosqlite import core
 from .helpers import setup_logger
 
 
@@ -461,12 +462,12 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
     def test_cancelled_connect_after_event_loop_closed(self):
         loop = asyncio.new_event_loop()
-        started = asyncio.Event()
+        started = loop.create_future()
         release = Event()
         native_connections = []
 
         def factory(*args, **kwargs):
-            loop.call_soon_threadsafe(started.set)
+            loop.call_soon_threadsafe(started.set_result, None)
             if not release.wait(5):
                 raise TimeoutError("connector was not released")
             native = sqlite3.Connection(*args, **kwargs)
@@ -479,7 +480,7 @@ class SmokeTest(IsolatedAsyncioTestCase):
 
         async def cancel_connection():
             task = asyncio.ensure_future(connection)
-            await asyncio.wait_for(started.wait(), 5)
+            await asyncio.wait_for(started, 5)
             task.cancel()
             with self.assertRaises(asyncio.CancelledError):
                 await task
@@ -501,6 +502,86 @@ class SmokeTest(IsolatedAsyncioTestCase):
                 loop.close()
                 for native in native_connections:
                     native.close()
+
+    def test_loop_closes_during_worker_delivery(self):
+        for delivery in ("stop", "exception"):
+            with self.subTest(delivery=delivery):
+                self._check_loop_closes_during_worker_delivery(delivery)
+
+    def _check_loop_closes_during_worker_delivery(self, delivery):
+        loop = asyncio.new_event_loop()
+        connection = loop.run_until_complete(
+            aiosqlite.connect(self.db, check_same_thread=False)
+        )
+        native = connection._conn
+        started = loop.create_future()
+        release = Event()
+        original_schedule = loop.call_soon_threadsafe
+
+        def gated_schedule(callback, *args, context=None):
+            is_target = (
+                callback is core.set_result and args[1] is core._STOP_RUNNING_SENTINEL
+                if delivery == "stop"
+                else callback is core.set_exception
+            )
+            if is_target:
+                # Close the loop after the worker's is_closed() check.
+                original_schedule(started.set_result, None)
+                if not release.wait(5):
+                    raise TimeoutError("result delivery was not released")
+            return original_schedule(callback, *args, context=context)
+
+        async def cancel_operation():
+            operation = (
+                connection.close()
+                if delivery == "stop"
+                else connection.execute("SELECT * FROM missing_table")
+            )
+            task = asyncio.ensure_future(operation)
+            await asyncio.wait_for(started, 5)
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            if delivery == "exception":
+                connection.stop()
+
+        with (
+            patch.object(loop, "call_soon_threadsafe", gated_schedule),
+            patch("threading.excepthook") as thread_error,
+        ):
+            try:
+                loop.run_until_complete(cancel_operation())
+                loop.close()
+                release.set()
+                connection._thread.join(5)
+                self.assertFalse(connection._thread.is_alive())
+                with self.assertRaisesRegex(sqlite3.ProgrammingError, "closed"):
+                    native.execute("SELECT 1")
+                thread_error.assert_not_called()
+            finally:
+                release.set()
+                if connection._thread.is_alive():
+                    connection._tx.put_nowait(
+                        (None, lambda: core._STOP_RUNNING_SENTINEL)
+                    )
+                connection._thread.join(5)
+                loop.close()
+                native.close()
+
+    def test_worker_delivery_preserves_open_loop_errors(self):
+        loop = asyncio.new_event_loop()
+        try:
+            with (
+                patch.object(
+                    loop,
+                    "call_soon_threadsafe",
+                    side_effect=RuntimeError("delivery failed"),
+                ),
+                self.assertRaisesRegex(RuntimeError, "delivery failed"),
+            ):
+                core._call_soon_threadsafe(loop, lambda: None)
+        finally:
+            loop.close()
 
     async def test_iterdump(self):
         async with aiosqlite.connect(":memory:") as db:
