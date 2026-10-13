@@ -45,6 +45,19 @@ _STOP_RUNNING_SENTINEL = object()
 _TxQueue = SimpleQueue[tuple[Optional[asyncio.Future], Callable[[], Any]]]
 
 
+def _call_soon_threadsafe(
+    loop: asyncio.AbstractEventLoop, callback: Callable[..., None], *args: Any
+) -> None:
+    if loop.is_closed():
+        return
+    try:
+        loop.call_soon_threadsafe(callback, *args)
+    except RuntimeError:
+        # The loop can close between the check and scheduling from this thread.
+        if not loop.is_closed():
+            raise
+
+
 def _connection_worker_thread(tx: _TxQueue):
     """
     Execute function calls on a separate thread.
@@ -60,11 +73,15 @@ def _connection_worker_thread(tx: _TxQueue):
 
         try:
             LOG.debug("executing %s", function)
-            result = function()
+            try:
+                result = function()
+                LOG.debug("operation %s completed", function)
+            finally:
+                # Do not retain a connection while the worker waits for its next item.
+                del function
 
             if future:
-                future.get_loop().call_soon_threadsafe(set_result, future, result)
-            LOG.debug("operation %s completed", function)
+                _call_soon_threadsafe(future.get_loop(), set_result, future, result)
 
             if result is _STOP_RUNNING_SENTINEL:
                 break
@@ -72,7 +89,7 @@ def _connection_worker_thread(tx: _TxQueue):
         except BaseException as e:  # noqa B036
             LOG.debug("returning exception %s", e)
             if future:
-                future.get_loop().call_soon_threadsafe(set_exception, future, e)
+                _call_soon_threadsafe(future.get_loop(), set_exception, future, e)
 
 
 class Connection:
@@ -163,12 +180,16 @@ class Connection:
         """Connect to the actual sqlite database."""
         if self._connection is None:
             try:
+
+                def connector():
+                    # Keep ownership on the worker even if the awaiting task is cancelled.
+                    self._connection = self._connector()
+
                 future = asyncio.get_event_loop().create_future()
-                self._tx.put_nowait((future, self._connector))
-                self._connection = await future
+                self._tx.put_nowait((future, connector))
+                await future
             except BaseException:
                 self.stop()
-                self._connection = None
                 raise
 
         return self
