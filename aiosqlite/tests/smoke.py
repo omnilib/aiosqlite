@@ -462,6 +462,14 @@ class SmokeTest(IsolatedAsyncioTestCase):
         # Check no more transaction pending
         self.assertEqual(db._tx.empty(), True)
 
+    async def test_concurrent_close(self):
+        db = await aiosqlite.connect(self.db)
+
+        await asyncio.wait_for(asyncio.gather(db.close(), db.close()), timeout=1)
+
+        self.assertFalse(db._running)
+        self.assertIsNone(db._connection)
+
     async def test_close_twice(self):
         db = await aiosqlite.connect(self.db)
 
