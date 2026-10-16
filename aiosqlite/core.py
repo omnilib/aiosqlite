@@ -115,6 +115,8 @@ class Connection:
 
     def stop(self) -> Optional[asyncio.Future]:
         """Stop the background thread. Prefer `async with` or `await close()`"""
+        if not self._running:
+            return None
         self._running = False
 
         def close_and_stop():
