@@ -1,7 +1,7 @@
 # Copyright Amethyst Reese
 # Licensed under the MIT license
 
-
+import sys
 from collections.abc import Coroutine, Generator
 from contextlib import AbstractAsyncContextManager
 from functools import wraps
@@ -9,6 +9,12 @@ from typing import Any, Callable, TypeVar
 
 from .cursor import Cursor
 
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
+_P = ParamSpec("_P")
 _T = TypeVar("_T")
 
 
@@ -47,10 +53,10 @@ class Result(AbstractAsyncContextManager[_T], Coroutine[Any, Any, _T]):
 
 
 def contextmanager(
-    method: Callable[..., Coroutine[Any, Any, _T]],
-) -> Callable[..., Result[_T]]:
+    method: Callable[_P, Coroutine[Any, Any, _T]],
+) -> Callable[_P, Result[_T]]:
     @wraps(method)
-    def wrapper(self, *args, **kwargs) -> Result[_T]:
-        return Result(method(self, *args, **kwargs))
+    def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> Result[_T]:
+        return Result(method(*args, **kwargs))
 
     return wrapper
