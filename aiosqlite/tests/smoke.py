@@ -535,3 +535,24 @@ class SmokeTest(IsolatedAsyncioTestCase):
         loop.close()
 
         db.stop()
+
+    async def test_stop_while_closing(self):
+        import threading
+
+        gate = threading.Event()
+        db = await aiosqlite.connect(":memory:")
+
+        await db.create_function("hold", 0, lambda: gate.wait() and 1)
+        busy = asyncio.create_task(db.execute("SELECT hold()"))
+        await asyncio.sleep(0.05)
+
+        closing = asyncio.create_task(db.close())
+        await asyncio.sleep(0.05)
+        stop_future = db.stop()
+        gate.set()
+
+        await busy
+        await asyncio.wait_for(closing, timeout=3)
+        if stop_future is not None:
+            await stop_future
+

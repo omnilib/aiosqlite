@@ -84,6 +84,7 @@ class Connection:
     ) -> None:
         self._running = True
         self._connection: Optional[sqlite3.Connection] = None
+        self._stop_future: Optional[asyncio.Future] = None
         self._connector = connector
         self._tx: _TxQueue = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
@@ -115,6 +116,9 @@ class Connection:
 
     def stop(self) -> Optional[asyncio.Future]:
         """Stop the background thread. Prefer `async with` or `await close()`"""
+        if self._stop_future is not None or not self._running:
+            return self._stop_future
+
         self._running = False
 
         def close_and_stop():
@@ -129,6 +133,7 @@ class Connection:
             future = None
 
         self._tx.put_nowait((future, close_and_stop))
+        self._stop_future = future
         return future
 
     @property
