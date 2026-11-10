@@ -535,3 +535,53 @@ class SmokeTest(IsolatedAsyncioTestCase):
         loop.close()
 
         db.stop()
+
+    def test_join_after_event_loop_closed(self):
+        async def connect():
+            return await aiosqlite.connect(":memory:")
+
+        db = asyncio.run(connect())
+        db.stop()
+        try:
+            self.assertIsNone(db.join(timeout=5))
+            self.assertFalse(db._thread.is_alive())
+            self.assertIsNone(db.join())
+        finally:
+            db._thread.join(timeout=5)
+
+    async def test_join_timeout_does_not_interrupt_queued_work(self):
+        from threading import Event
+
+        started = Event()
+        release = Event()
+        db = await aiosqlite.connect(":memory:")
+
+        def wait_for_release():
+            started.set()
+            if not release.wait(timeout=5):
+                raise TimeoutError("test did not release the worker")
+            return 42
+
+        await db.create_function("wait_for_release", 0, wait_for_release)
+        query = asyncio.create_task(db.execute("select wait_for_release()"))
+        stop = None
+        try:
+            self.assertTrue(await asyncio.to_thread(started.wait, 5))
+            stop = db.stop()
+            self.assertIsNone(db.join(timeout=0))
+            self.assertTrue(db._thread.is_alive())
+        finally:
+            release.set()
+            await query
+            if stop is None:
+                stop = db.stop()
+            if stop is not None:
+                await stop
+            db._thread.join(timeout=5)
+        self.assertIsNone(db.join(timeout=5))
+        self.assertFalse(db._thread.is_alive())
+
+    def test_join_before_connection_start(self):
+        db = aiosqlite.connect(":memory:")
+        with self.assertRaisesRegex(RuntimeError, "cannot join thread before"):
+            db.join()
