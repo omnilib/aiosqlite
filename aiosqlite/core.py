@@ -131,6 +131,16 @@ class Connection:
         self._tx.put_nowait((future, close_and_stop))
         return future
 
+    def join(self, timeout: Optional[float] = None) -> None:
+        """Wait for the background thread to terminate.
+
+        Call :meth:`stop` first. This does not stop the thread or close the
+        connection itself. ``timeout`` bounds the wait, like ``Thread.join``.
+        This method blocks the calling thread; prefer ``await close()`` in
+        asynchronous code.
+        """
+        self._thread.join(timeout)
+
     @property
     def _conn(self) -> sqlite3.Connection:
         if self._connection is None:

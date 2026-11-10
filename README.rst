@@ -55,6 +55,12 @@ aiosqlite also replicates most of the advanced features of ``sqlite3``:
         assert db.total_changes > 0
 
 
+When shutting down from outside an event loop, call ``connection.stop()`` and
+then ``connection.join()`` to wait for the background worker to finish its queued
+work and close the SQLite connection. ``join(timeout=...)`` bounds the wait;
+it does not stop the worker itself. This is a synchronous wait, so continue to
+prefer ``async with`` or ``await connection.close()`` in asynchronous code.
+
 Install
 -------
 
