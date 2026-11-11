@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator, Generator, Iterable
 from functools import partial
 from pathlib import Path
 from queue import Empty, Queue, SimpleQueue
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any, Callable, Literal, Optional, Union
 from warnings import warn
 
@@ -83,7 +83,10 @@ class Connection:
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
         self._running = True
+        self._stopped = False
         self._connection: Optional[sqlite3.Connection] = None
+        self._stop_lock = Lock()
+        self._stop_futures: list[asyncio.Future] = []
         self._connector = connector
         self._tx: _TxQueue = SimpleQueue()
         self._iter_chunk_size = iter_chunk_size
@@ -115,21 +118,49 @@ class Connection:
 
     def stop(self) -> Optional[asyncio.Future]:
         """Stop the background thread. Prefer `async with` or `await close()`"""
-        self._running = False
-
-        def close_and_stop():
-            if self._connection is not None:
-                self._connection.close()
-                self._connection = None
-            return _STOP_RUNNING_SENTINEL
-
         try:
-            future = asyncio.get_event_loop().create_future()
+            loop = asyncio.get_event_loop()
+            future: Optional[asyncio.Future] = (
+                None if loop.is_closed() else loop.create_future()
+            )
         except Exception:
             future = None
 
-        self._tx.put_nowait((future, close_and_stop))
-        return future
+        with self._stop_lock:
+            if self._stopped:
+                if future is not None:
+                    set_result(future, _STOP_RUNNING_SENTINEL)
+                return future
+
+            if future is not None:
+                self._stop_futures.append(future)
+
+            if not self._running:
+                return future
+
+            self._running = False
+
+            def close_and_stop() -> object:
+                try:
+                    if self._connection is not None:
+                        self._connection.close()
+                        self._connection = None
+                finally:
+                    with self._stop_lock:
+                        self._stopped = True
+                        futures = self._stop_futures
+                        self._stop_futures = []
+                    for fut in futures:
+                        try:
+                            fut.get_loop().call_soon_threadsafe(
+                                set_result, fut, _STOP_RUNNING_SENTINEL
+                            )
+                        except RuntimeError:
+                            pass
+                return _STOP_RUNNING_SENTINEL
+
+            self._tx.put_nowait((None, close_and_stop))
+            return future
 
     @property
     def _conn(self) -> sqlite3.Connection:
