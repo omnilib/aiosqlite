@@ -556,3 +556,94 @@ class SmokeTest(IsolatedAsyncioTestCase):
         if stop_future is not None:
             await stop_future
 
+    async def test_two_closers_same_loop(self):
+        db = await aiosqlite.connect(":memory:")
+        try:
+            await asyncio.wait_for(asyncio.gather(db.close(), db.close()), 3)
+        finally:
+            db._thread.join(1)
+        self.assertFalse(db._thread.is_alive())
+
+    async def test_stop_after_already_stopped(self):
+        db = await aiosqlite.connect(":memory:")
+        await db.close()
+        stop_future = db.stop()
+        self.assertIsNotNone(stop_future)
+        assert stop_future is not None
+        self.assertTrue(stop_future.done())
+        await stop_future
+
+    def test_sync_stop_other_loop_during_close(self):
+        import threading
+
+        loop_a = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop_a)
+        sql_entered = threading.Event()
+        closing_queued = threading.Event()
+        release_sql = threading.Event()
+        finished = threading.Event()
+        connections: list[aiosqlite.Connection] = []
+        state: dict[str, str] = {}
+
+        def hold():
+            sql_entered.set()
+            if not release_sql.wait(5):
+                raise RuntimeError("test SQL gate timed out")
+            return 1
+
+        async def scenario():
+            db = await aiosqlite.connect(":memory:")
+            connections.append(db)
+            await db.create_function("hold_for_stop", 0, hold)
+            busy = asyncio.create_task(db.execute("SELECT hold_for_stop()"))
+            for _ in range(1000):
+                if sql_entered.is_set():
+                    break
+                await asyncio.sleep(0.001)
+            if not sql_entered.is_set():
+                raise RuntimeError("SQL worker did not enter gate")
+            closing = asyncio.create_task(db.close())
+            await asyncio.sleep(0)
+            if closing.done():
+                raise RuntimeError("close did not wait for queued SQL")
+            closing_queued.set()
+            await busy
+            try:
+                await asyncio.wait_for(closing, 3)
+                state["close_outcome"] = "RETURNED"
+            except Exception as exc:
+                state["close_outcome"] = type(exc).__name__
+                state["close_error"] = str(exc)
+
+        def loop_b_thread():
+            try:
+                asyncio.run(scenario())
+            except BaseException as exc:
+                state["scenario_error"] = f"{type(exc).__name__}: {exc}"
+            finally:
+                finished.set()
+
+        thread_b = threading.Thread(target=loop_b_thread)
+        thread_b.start()
+        try:
+            self.assertTrue(closing_queued.wait(3), state)
+            stop_future = connections[0].stop()
+            self.assertIsNotNone(stop_future)
+            assert stop_future is not None
+            self.assertIs(stop_future.get_loop(), loop_a)
+            release_sql.set()
+            self.assertTrue(finished.wait(4), state)
+        finally:
+            release_sql.set()
+            thread_b.join(6)
+            if connections:
+                connections[0]._thread.join(1)
+            loop_a.run_until_complete(asyncio.sleep(0))
+            loop_a.close()
+            asyncio.set_event_loop(None)
+
+        self.assertFalse(thread_b.is_alive(), state)
+        self.assertFalse(connections[0]._thread.is_alive(), state)
+        self.assertNotIn("scenario_error", state)
+        self.assertEqual(state.get("close_outcome"), "RETURNED", state)
+
