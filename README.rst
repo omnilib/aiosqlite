@@ -41,6 +41,18 @@ It can also be used in the traditional, procedural manner:
     await cursor.close()
     await db.close()
 
+For a buffered query, ``execute_fetchall()`` executes the query, fetches all rows,
+and closes its native cursor in a single worker operation:
+
+.. code-block:: python
+
+    async with aiosqlite.connect(...) as db:
+        rows = await db.execute_fetchall('SELECT * FROM some_table')
+
+The cursor is closed even if fetching raises an exception. If closing also fails,
+the close error is propagated with the fetch error in its ``__context__``.
+Cancelling the awaiting coroutine does not skip cleanup of the cursor in the worker.
+
 aiosqlite also replicates most of the advanced features of ``sqlite3``:
 
 .. code-block:: python
