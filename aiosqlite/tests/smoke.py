@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from sqlite3 import OperationalError
 from tempfile import TemporaryDirectory
-from threading import Thread
+from threading import Event, Thread
 from unittest import IsolatedAsyncioTestCase, SkipTest
 from unittest.mock import patch
 
@@ -270,6 +270,93 @@ class SmokeTest(IsolatedAsyncioTestCase):
             cursor = await db.execute("select k from test_fetch_all where k < 30")
             rows = await cursor.fetchall()
             self.assertEqual(rows, [(10,), (24,), (16,)])
+
+    def fetchall_connection_factory(self, closed, close_error=None):
+        class NativeCursor(sqlite3.Cursor):
+            def close(self):
+                super().close()
+                closed.append(self)
+                if close_error is not None:
+                    raise close_error
+
+        class NativeConnection(sqlite3.Connection):
+            def execute(self, sql, parameters=(), /):
+                cursor = self.cursor(factory=NativeCursor)
+                return cursor.execute(sql, parameters)
+
+        return NativeConnection
+
+    async def test_execute_fetchall_closes_cursor(self):
+        for sql, parameters, expected in (
+            ("select ? union all select ?", (7, 8), [(7,), (8,)]),
+            ("select 7 where 0", (), []),
+        ):
+            with self.subTest(sql=sql):
+                closed = []
+                factory = self.fetchall_connection_factory(closed)
+                async with aiosqlite.connect(":memory:", factory=factory) as db:
+                    self.assertEqual(
+                        await db.execute_fetchall(sql, parameters), expected
+                    )
+                    self.assertEqual(len(closed), 1)
+                    async with db.execute_fetchall(sql, parameters) as rows:
+                        self.assertEqual(rows, expected)
+                        self.assertEqual(len(closed), 2)
+                    self.assertEqual(len(closed), 2)
+
+    async def test_execute_fetchall_cleanup_errors(self):
+        for fetch_fails, close_fails in ((True, False), (False, True), (True, True)):
+            with self.subTest(fetch_fails=fetch_fails, close_fails=close_fails):
+                closed = []
+                fetch_error = ValueError("row conversion failed")
+                close_error = OperationalError("cursor cleanup failed")
+                factory = self.fetchall_connection_factory(
+                    closed, close_error if close_fails else None
+                )
+
+                def row_factory(cursor, row, error=fetch_error):
+                    raise error
+
+                async with aiosqlite.connect(":memory:", factory=factory) as db:
+                    if fetch_fails:
+                        db.row_factory = row_factory
+                    expected = close_error if close_fails else fetch_error
+                    with self.assertRaises(type(expected)) as raised:
+                        await db.execute_fetchall("select 7")
+                    self.assertIs(raised.exception, expected)
+                    self.assertEqual(len(closed), 1)
+                    if fetch_fails and close_fails:
+                        self.assertIs(raised.exception.__context__, fetch_error)
+
+    async def test_execute_fetchall_cleanup_after_cancellation(self):
+        started = asyncio.Event()
+        release = Event()
+        closed = []
+        loop = asyncio.get_running_loop()
+
+        def row_factory(cursor, row):
+            loop.call_soon_threadsafe(started.set)
+            if not release.wait(5):
+                raise TimeoutError("row conversion was not released")
+            return row
+
+        factory = self.fetchall_connection_factory(closed)
+        async with aiosqlite.connect(":memory:", factory=factory) as db:
+            db.row_factory = row_factory
+            task = asyncio.create_task(db.execute_fetchall("select 7"))
+            try:
+                await asyncio.wait_for(started.wait(), 5)
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+                self.assertEqual(closed, [])
+            finally:
+                release.set()
+                await asyncio.gather(task, return_exceptions=True)
+
+            # Wait for the worker to finish fetching before inspecting cleanup.
+            await db.commit()
+            self.assertEqual(len(closed), 1)
 
     async def test_enable_load_extension(self):
         """Assert that after enabling extension loading, they can be loaded"""
